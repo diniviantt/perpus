@@ -9,6 +9,7 @@ use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\PengembalianController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RiwayatPinjamController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,9 +24,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 
-Route::prefix('home')->group(function(){
+Route::prefix('home')->group(function () {
     Route::get('/', [IndexDashboardController::class, 'HomeViewBook'])->name('home');
-    // Route::get('/HomeViewBook', [IndexDashboardController::class, 'HomeViewBook'])->name('home.viewbook');
 });
 
 
@@ -35,7 +35,9 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/admin', [DashboardController::class, 'admin'])->name('dashboard.admin');
         Route::get('/usermanage-table', [DashboardController::class, 'TableUserManage'])->name('dashboard.table');
-        Route::get('/delete-user', [DashboardController::class, 'destroy'])->name('destroy.user');
+        Route::delete('/delete-user/{id}', [DashboardController::class, 'destroy'])->name('delete-user');
+        Route::patch('/rolesupdate/{id}', [DashboardController::class, 'update'])->name('roles.update');
+        Route::get('/get-user/{id}', [DashboardController::class, 'getUser'])->name('dashboard.get-user');
     });
 
     Route::middleware(['role:user'])->group(function () {

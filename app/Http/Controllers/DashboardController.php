@@ -7,9 +7,12 @@ use App\Models\Kategori;
 use App\Models\ModelHasRole;
 use App\Models\Peminjaman;
 use App\Models\Profile;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 class DashboardController extends Controller
@@ -28,16 +31,18 @@ class DashboardController extends Controller
 
     public function admin()
     {
+        $roles = Role::all();
         $user = ModelHasRole::with(['user', 'role'])->where('role_id',  '2')->get();
         return view('dashboard.admin', [
-            'user' => $user
+            'user' => $user,
+            'roles' => $roles
         ]);
     }
 
     public function TableUserManage()
     {
         $users = ModelHasRole::with(['user', 'role'])
-            ->where('role_id', 2) // Pastikan ini adalah role_id yang Anda inginkan
+            ->whereNotIn('role_id', [1])
             ->get();
 
         return DataTables::of($users)
@@ -45,13 +50,13 @@ class DashboardController extends Controller
             ->addColumn('name', function ($user) {
                 // return $user->user ? $user->user->name : 'N/A'; // Pengecekan null
                 if (isset($user->user->avatar)) {
-                    $img = '<div class="flex flex-row gap-x-3 items-center">
-                    <img src="' . $user->user->avatar . '" alt="" class="rounded-full size-10 object-cover">
+                    $img = '<div class="flex flex-row items-center gap-x-3">
+                    <img src="' . $user->user->avatar . '" alt="" class="object-cover rounded-full size-10">
                     <span>' . $user->user->name . '</span>
                     </div>';
                 } else {
-                    $img = '<div class="flex flex-row gap-x-3 items-center">
-                    <img src="' . asset('assets/img/profile.webp') . '" alt="" class="rounded-full size-10 object-cover">
+                    $img = '<div class="flex flex-row items-center gap-x-3">
+                    <img src="' . asset('assets/img/profile.webp') . '" alt="" class="object-cover rounded-full size-10">
                     <span>' . $user->user->name . '</span>
                     </div>';
                 }
@@ -62,7 +67,7 @@ class DashboardController extends Controller
                 return $user->user ? $user->user->email : 'N/A'; // Pengecekan null
             })
             ->addColumn('role', function ($user) {
-                return '<span class="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-400 dark:text-blue-600">' . $user->role->name . '</span>';
+                return '<span class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 rounded-full bg-purple-50 ring-1 ring-purple-700/20 ring-inset">' . $user->role->name . '</span>';
             })
             ->addColumn('option', 'dashboard.dropdown-admin') // Pastikan view ini ada
             ->rawColumns(['name', 'email', 'role', 'option']) // Mengizinkan HTML di kolom ini
@@ -71,12 +76,45 @@ class DashboardController extends Controller
 
     public function destroy($id)
     {
-        // Temukan anggota berdasarkan ID dan hapus
-        $anggota = ModelHasRole::findOrFail($id);
-        $anggota->delete();
+        DB::beginTransaction(); // Mulai transaksi database
 
-        return response()->json(['status' => 'success']);
+        try {
+            DB::table('model_has_roles')->where('model_id', $id)->delete();
+            User::findOrFail($id)->delete();
+
+            DB::commit(); // Simpan perubahan jika tidak ada error
+            return response("success", 200);
+        } catch (\Exception $e) {
+            DB::rollBack(); // Batalkan perubahan jika ada error
+            return response($e->getMessage(), 500);
+        }
     }
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+        ]);
+
+        // Update role for the given user
+        DB::table('model_has_roles')
+            ->where('model_id', $id) // Corrected to use user id from route
+            ->update(['role_id' => $request->role_id]);
+
+        return response()->json(['status' => true]);
+    }
+
+    public function getUser(Request $request, $id)
+    {
+        // Get user with their roles
+        $user = User::with('roles')->find($id);
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        return response()->json(['data' => $user]);
+    }
+
 
     public function user()
     {

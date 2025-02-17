@@ -7,13 +7,14 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ? $title . ' · ' : '' }}{{ config('app.name', 'Kasir Simple') }}</title>
+    <title>{{ $title ? $title . ' · ' : '' }}{{ config('app.name', 'PerpustakaanSimple') }}</title>
     <link rel="shortcut icon" href="{{ asset('assets/img/laravel-indigo-2.webp') }}" type="image/x-icon">
 
     {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {{-- <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script> --}}
 
     {{-- Fontawesome CDN Link --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" />
@@ -40,6 +41,9 @@
             <main>
                 {{ $slot }}
             </main>
+            @if (isset($modals))
+                {{ $modals }}
+            @endif
 
             <x-partials.footer />
         </div>

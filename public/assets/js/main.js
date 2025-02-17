@@ -40,39 +40,29 @@ $.ajaxSetup({
         "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
     },
 });
-let onClickDD = (id) => {
-    // Tutup semua dropdown yang terbuka
-    let content = $(".dropdown-content");
-    // content.each(function (event) {
-    //     // Tutup semua dropdown selain yang sedang dibuka
-    //     if (!$(event.target).closest(".dropdown-container").length) {
-    //         $(this).addClass("hidden");
-    //         console.log("test");
-    //     }
-    // });
-
-    // Toggle dropdown yang dipilih
-    $("#dropdownMenu-" + id).toggleClass("hidden");
-};
-
-$(function () {
+$(document).ready(function () {
     $(document).on("click", function (event) {
-        // Cek apakah klik terjadi di luar dropdown
+        // Tutup semua dropdown jika klik di luar dropdown-container
         if (!$(event.target).closest(".dropdown-container").length) {
-            // Sembunyikan semua dropdown yang terbuka
-            let dropdown = $(".dropdown-p");
-
-            dropdown.each(function () {
-                if (!$(this).hasClass("hidden")) {
-                    $(this).addClass("hidden");
-                    console.log("haha");
-                }
-            });
+            $(".dropdown-p").addClass("hidden");
         }
     });
 });
 
-function activate(id) {
-    const dropdown = document.getElementById(`dropdownMenu-${id}`);
-    dropdown.classList.toggle("hidden");
-}
+let onClickDD = (id) => {
+    // Tutup semua dropdown yang terbuka terlebih dahulu
+    $(".dropdown-p").addClass("hidden");
+
+    // Toggle dropdown yang diklik
+    let dropdown = $("#dropdownMenu-" + id);
+    if (dropdown.hasClass("hidden")) {
+        dropdown.removeClass("hidden");
+    } else {
+        dropdown.addClass("hidden");
+    }
+};
+
+// function activate(id) {
+//     const dropdown = document.getElementById(`dropdownMenu-${id}`);
+//     dropdown.classList.toggle("hidden");
+// }

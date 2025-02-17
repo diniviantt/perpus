@@ -25,4 +25,6 @@ class IndexDashboardController extends Controller
 
         return view('user.home', compact('buku', 'kategori'));
     }
+
+ 
 }

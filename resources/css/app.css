@@ -89,7 +89,7 @@
     @apply left-[260px] w-[calc(100%-260px)] md:left-0 md:w-full;
 }
 .navbar-container {
-    @apply fixed p-6 bg-[#F5F5F9];
+    @apply p-6 bg-[#F5F5F9];
 }
 .navbar {
     @apply w-full px-6 py-2 flex items-center justify-between gap-x-5 text-[#697a8d] bg-white rounded-md shadow-box;
