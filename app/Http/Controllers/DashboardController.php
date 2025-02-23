@@ -22,7 +22,7 @@ class DashboardController extends Controller
         $iduser = Auth::id();
         $kategori = Kategori::count();
         $buku = Buku::count();
-        $user = User::role('user')->count();
+        $user = User::role('peminjam')->count();
         $riwayat_pinjam = Peminjaman::with(['user', 'buku'])->orderBy('updated_at', 'desc')->get();
         $jumlah_riwayat = Peminjaman::count();
         $pinjamanUser = Peminjaman::where('users_id', $iduser)->where('tanggal_pengembalian', null)->count();

@@ -3,28 +3,59 @@
 
     <x-slot name="styles">
         <style>
-            .dataTables_wrapper .dataTables_filter {
+            /* .dataTables_wrapper .dataTables_filter {
                 margin-bottom: 11px;
             }
 
             .dataTables_length select {
                 width: 60px;
-            }
+            } */
         </style>
     </x-slot>
 
     <x-card>
-        <div class="">
-            <a href="">Tambah</a>
+        <div class="relative inline-flex mb-3 border border-gray-500 rounded-md" role="group">
+            <!-- Tombol Tambah Data -->
+            <div class="relative w-full group">
+                <a href="javascript:void(0);" onclick="addUser()"
+                    class="flex items-center justify-center w-full h-full gap-2 px-4 py-2 text-sm font-normal text-gray-400 transition duration-300 ease-in-out bg-transparent border-r border-gray-600 ">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
+                        <path
+                            d="M21.5,2H12.118L8.118,0H2.5C1.122,0,0,1.122,0,2.5V22H10.298c-.2-.32-.381-.653-.538-1H1V7H23v4.026c.36,.306,.695,.641,1,1.003V4.5c0-1.378-1.121-2.5-2.5-2.5ZM1,6V2.5c0-.827,.673-1.5,1.5-1.5H7.882l4,2h9.618c.827,0,1.5,.673,1.5,1.5v1.5H1Zm16.5,5c-3.584,0-6.5,2.916-6.5,6.5s2.916,6.5,6.5,6.5,6.5-2.916,6.5-6.5-2.916-6.5-6.5-6.5Zm0,12c-3.032,0-5.5-2.468-5.5-5.5s2.468-5.5,5.5-5.5,5.5,2.468,5.5,5.5-2.468,5.5-5.5,5.5Zm.5-6h2.5v1h-2.5v2.5h-1v-2.5h-2.5v-1h2.5v-2.5h1v2.5Z" />
+                    </svg>
+                </a>
+                <!-- Tooltip -->
+                <span
+                    class="absolute top-0 px-3 py-2 text-xs text-white transition-opacity duration-300 -translate-x-1/2 -translate-y-full rounded-md opacity-0 pointer-events-none bg-gray-800/40 left-1/2 whitespace-nowrap group-hover:opacity-100">
+                    Tambah Data
+                </span>
+            </div>
+
+            <!-- Tombol Import Data -->
+            <div class="relative w-full rounded-md group">
+                <a href="#"
+                    class="flex items-center justify-center w-full h-full gap-2 px-4 py-2 text-sm font-normal text-gray-400 transition duration-300 ease-in-out bg-transparent rounded-r-lg ">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
+                        <path
+                            d="M17.5,11c-3.58,0-6.5,2.92-6.5,6.5s2.92,6.5,6.5,6.5,6.5-2.92,6.5-6.5-2.92-6.5-6.5-6.5Zm0,12c-3.03,0-5.5-2.47-5.5-5.5s2.47-5.5,5.5-5.5,5.5,2.47,5.5,5.5-2.47,5.5-5.5,5.5Zm3.06-6.56c.58,.58,.58,1.54,0,2.12l-2.17,2.17-.71-.71,2.02-2.02h-5.71v-1h5.71l-1.94-1.94,.71-.71,2.09,2.09Zm-9.01-5.01c-.24,.24-.47,.49-.69,.76-.26-.12-.55-.19-.86-.19-1.1,0-2,.9-2,2,0,.81,.48,1.5,1.17,1.82-.07,.33-.11,.67-.14,1.02-1.18-.41-2.03-1.52-2.03-2.84,0-1.65,1.35-3,3-3,.57,0,1.1,.16,1.55,.43ZM1,20V3C1,1.9,1.9,1,3,1h1v7H15V1h.42l4.58,4.58v3.8c.34,.11,.68,.23,1,.38V5.16L15.83,0H3C1.35,0,0,1.35,0,3V21H9.75c-.15-.32-.27-.66-.38-1H1ZM14,7H5V1H14V7Z" />
+                    </svg>
+                </a>
+                <!-- Tooltip -->
+                <span
+                    class="absolute top-0 px-3 py-2 text-xs text-white transition-opacity duration-300 -translate-x-1/2 -translate-y-full rounded-md opacity-0 pointer-events-none bg-gray-800/40 left-1/2 whitespace-nowrap group-hover:opacity-100">
+                    Import Data
+                </span>
+            </div>
         </div>
-        <table id="userManage" class="min-w-full bg-white border border-gray-300">
-            <thead>
+
+        <table id="userManage" class="min-w-full">
+            <thead class="">
                 <tr class="text-sm leading-normal text-gray-600 uppercase bg-gray-200">
-                    <th class="px-6 py-3 text-left border border-gray-300">No</th>
-                    <th class="px-6 py-3 text-left border border-gray-300">Name</th>
-                    <th class="px-6 py-3 text-left border border-gray-300">Email</th>
-                    <th class="px-6 py-3 text-left border border-gray-300">Role</th>
-                    <th class="px-6 py-3 text-left border border-gray-300">Option</th>
+                    <th class="px-6 py-3 border border-gray-300">No</th>
+                    <th class="px-6 py-3 border border-gray-300">Name</th>
+                    <th class="px-6 py-3 border border-gray-300">Email</th>
+                    <th class="px-6 py-3 border border-gray-300">Role</th>
+                    <th class="px-6 py-3 border border-gray-300">Option</th>
                 </tr>
             </thead>
             <tbody>
@@ -33,8 +64,9 @@
         </table>
     </x-card>
 
-    <div x-data="{ modalUser: false }" x-init="$store.modal = { modalUser: modalUser }">
+    <div x-data="{ modalUser: false, modalAddUser: false }" x-init="$store.modal = { modalUser: modalUser, modalAddUser: modalAddUser }">
         <x-slot name="modals">
+            <!-- Modal Edit User -->
             <form id="editUser">
                 <x-modal modal="$store.modal.modalUser" dialog="modal-modalUser-dialog">
                     <div class="px-5 bg-white sm:p-7 sm:pb-0">
@@ -46,9 +78,7 @@
                                     name="name" value="{{ old('name') }}" placeholder="Enter Name" />
                                 <select name="role_id" class="w-full p-2 border border-black rounded">
                                     @foreach ($roles as $r)
-                                        <option value="{{ $r->id }}">
-                                            {{ $r->name }}
-                                        </option>
+                                        <option value="{{ $r->id }}">{{ $r->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -57,18 +87,83 @@
 
                     <div class="px-4 py-4 sm:flex sm:flex-row-reverse">
                         <x-modal-button x-on:click="$store.modal.modalUser = false" type="button"
-                            id="button-modalUser-close"
-                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500"
-                            :label="__('Batal')">{{ __('Batal') }}</x-modal-button>
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Batal') }}
+                        </x-modal-button>
                         <x-modal-button x-on:click="$store.modal.modalUser = false" type="submit"
-                            id="button-modalUser-close"
-                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500"
-                            :label="__('Simpan')">{{ __('Simpan') }}</x-modal-button>
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Simpan') }}
+                        </x-modal-button>
+                    </div>
+                </x-modal>
+            </form>
+
+            <!-- Modal Tambah User -->
+            <form id="AddUser" action="{{ route('add-user') }}" method="POST" class="space-y-4">
+                @csrf
+                <x-modal modal="$store.modal.modalAddUser" dialog="modal-modalAddUser-dialog">
+                    <div class="px-5 bg-white sm:p-7 sm:pb-0">
+                        <div class="mt-5 sm:mt-0">
+                            <x-modal-title :label="__('Tambah Anggota')" />
+                            <div class="my-2 space-y-3">
+                                <!-- Form fields -->
+                                <div>
+                                    <x-input-label for="name" :text="__('Nama')" />
+                                    <x-text-input name="name" id="name" class="mt-1" :value="old('name')"
+                                        required />
+                                    <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="email" :text="__('Email')" />
+                                    <x-text-input type="email" name="email" id="email" class="mt-1"
+                                        :value="old('email')" required />
+                                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="password" :text="__('Password')" />
+                                    <x-text-input type="password" name="password" id="password" class="mt-1"
+                                        required />
+                                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="password_confirmation" :text="__('Konfirmasi Password')" />
+                                    <x-text-input type="password" name="password_confirmation"
+                                        id="password_confirmation" class="mt-1" required />
+                                </div>
+
+                                <div>
+                                    <x-input-label for="address" :text="__('Role')" />
+                                    <select
+                                        class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 truncate transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-lg shrink focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500 placeholder:text-sm placeholder:text-slate-300"
+                                        name="" id="">
+                                        <option value="Pilih Role">Pilih Role</option>
+                                    </select>
+                                    <x-input-error :messages="$errors->get('address')" class="mt-2" />
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-4 sm:flex sm:flex-row-reverse">
+                        <x-modal-button type="submit"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Simpan') }}
+                        </x-modal-button>
+
+                        <x-modal-button x-on:click="$store.modal.modalAddUser = false" type="button"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Batal') }}
+                        </x-modal-button>
                     </div>
                 </x-modal>
             </form>
         </x-slot>
     </div>
+
 
     <x-slot name="scripts">
         <script>
@@ -80,10 +175,20 @@
                     ajax: {
                         'url': '{{ route('dashboard.table') }}',
                     },
+                    headerCallback: function(thead) {
+                        $(thead).find('th').each(function() {
+                            $(this).addClass('text-center');
+                        });
+                    },
                     columnDefs: [{
-                        targets: [4],
-                        className: 'relative',
-                    }],
+                            targets: [4],
+                            className: 'relative',
+                        },
+                        {
+                            targets: [0, 1, 2, 3, 4],
+                            className: 'text-center',
+                        }
+                    ],
                     columns: [{
                             data: 'DT_RowIndex',
                             name: 'DT_RowIndex',
@@ -161,6 +266,24 @@
             });
 
 
+            function addUser() {
+                $('#modal-modalAddUser-dialog').removeClass("invisible");
+                $('#modal-modalAddUser-dialog').addClass("visible");
+
+                $("input[name='name']").val('');
+                $("input[name='email']").val('');
+                $("input[name='password']").val('');
+                $("input[name='alamat']").val('');
+                $("input[name='notelp']").val('');
+                $("select[name='provinsi']").val('');
+                $("select[name='kecamatan']").val('');
+
+                window.Alpine.store('modal', {
+                    modalAddUser: true,
+                });
+            }
+
+
             // Open modal for editing user
             function editUser(id) {
                 $('#modal-modalUser-dialog').removeClass("invisible");
@@ -185,6 +308,80 @@
                     modalUser: true,
                 });
             }
+
+            $('#AddUser').on('submit', function(event) {
+                event.preventDefault();
+
+                let namalengkap = $("input[name='namalengkap']").val();
+                let nama = $("input[name='nama']").val();
+                let email = $("input[name='email']").val();
+                let password = $("input[name='password']").val();
+                let alamat = $("input[name='alamat']").val();
+                let notelp = $("input[name='notelp']").val();
+                let provinsi = $("select[name='provinsi']").val();
+                let kecamatan = $("select[name='kecamatan']").val();
+
+                $.ajax({
+                    url: `${window.location.origin}/dashboard/add-user`, // Endpoint untuk tambah user
+                    type: 'POST',
+                    data: {
+                        namalengkap: namalengkap,
+                        nama: nama,
+                        email: email,
+                        password: password,
+                        alamat: alamat,
+                        notelp: notelp,
+                        provinsi: provinsi,
+                        kecamatan: kecamatan,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.status === true) {
+                            Swal.fire({
+                                title: 'Success!',
+                                text: 'User has been added successfully.',
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                allowOutsideClick: false
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.reload(); // Reload data tabel
+                                }
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'There was an error adding the user.',
+                            icon: 'error',
+                            confirmButtonText: 'Try Again'
+                        });
+                    }
+                });
+            });
+
+            // Open modal for adding user
+            function AddUser() {
+                $('#modal-modalAddUser-dialog').removeClass("invisible");
+                $('#modal-modalAddUser-dialog').addClass("visible");
+
+                // Kosongkan input form sebelum ditampilkan
+                $("input[name='namalengkap']").val('');
+                $("input[name='nama']").val('');
+                $("input[name='email']").val('');
+                $("input[name='password']").val('');
+                $("input[name='alamat']").val('');
+                $("input[name='notelp']").val('');
+                $("select[name='provinsi']").val('');
+                $("select[name='kecamatan']").val('');
+
+                window.Alpine.store('modal', {
+                    modalUser: true,
+                });
+            }
+
 
             // Confirm delete user
             function confirmDelete(id) {

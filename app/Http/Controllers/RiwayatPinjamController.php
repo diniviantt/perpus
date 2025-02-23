@@ -28,18 +28,18 @@ class RiwayatPinjamController extends Controller
     {
         $iduser = Auth::id();
         $buku = Buku::where('status', 'In Stock')->get();
-        // return auth()->user()->getRoleNames()[0];
-        // Periksa apakah pengguna memiliki peran 'admin'
-        if (Auth::user()->getRoleNames()[0] == 'user') {
-            // Ambil pengguna dengan role_id lebih dari 1
-            $peminjam = ModelHasRole::with(['user'])->where('role_id', '>', 1)->first();
+
+        // Periksa apakah pengguna memiliki peran 'user'
+        if (Auth::user()->hasRole('user')) {
+            // Ambil pengguna dengan peran 'user'
+            $peminjam = User::whereHas('roles', function ($query) {
+                $query->where('name', 'user');
+            })->get();
         } else {
-            // Jika bukan admin, ambil semua pengguna
-            $peminjam = User::all();
+            // Ambil pengguna dengan role_id > 1 dari ModelHasRole
+            $peminjam = ModelHasRole::with('user')->where('role_id', '>', 1)->get();
         }
-
-
-
+        // dd($peminjam);
 
         return view('peminjaman.tambah', ['buku' => $buku, 'peminjam' => $peminjam]);
     }

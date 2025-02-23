@@ -23,8 +23,11 @@ subMenuTitles.forEach((title) => {
 
 const dropdownBtn = document.querySelector(".dropbtn");
 const dropdownContent = document.querySelector(".dropdown-content");
+const navbar = document.querySelector(".navbar-container");
 dropdownBtn.addEventListener("click", () => {
     dropdownContent.classList.toggle("show");
+    navbar.classList.remove("z-[100]");
+    navbar.classList.toggle("index-101");
 });
 document.addEventListener("click", function (e) {
     if (
@@ -32,6 +35,8 @@ document.addEventListener("click", function (e) {
         !dropdownContent.contains(e.target)
     ) {
         dropdownContent.classList.remove("show");
+        navbar.classList.remove("index-101");
+        navbar.classList.toggle("z-[100]");
     }
 });
 

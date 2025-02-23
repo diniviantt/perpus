@@ -6,6 +6,7 @@ import Alpine from "alpinejs";
 Alpine.store("modal", {
     testing: false,
     modalUser: false,
+    modalAddUser: false,
 });
 
 window.Alpine = Alpine;

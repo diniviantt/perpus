@@ -101,13 +101,17 @@
                     <select name="users_id" class="form-control">
                         <option value="">Pilih Peminjam</option>
                         @forelse ($peminjam as $item)
-                            <option value="{{ $item->user->id }}">{{ $item->user->name }} ({{ $item->user->email }})
-                            </option>
+                            @if (isset($item->user))
+                                <option value="{{ $item->user->id }}">
+                                    {{ $item->user->name }} ({{ $item->user->email }})
+                                </option>
+                            @endif
                         @empty
-                            <option value="" disabled>Tidak ada user</option>
+                            <option disabled>Tidak ada peminjam</option>
                         @endforelse
                     </select>
                 @endrole
+
 
                 @role('user')
                     <select name="users_id" class="form-control">
