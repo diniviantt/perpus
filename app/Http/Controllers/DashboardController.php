@@ -13,6 +13,7 @@ use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Yajra\DataTables\Facades\DataTables;
 
 class DashboardController extends Controller
@@ -32,7 +33,7 @@ class DashboardController extends Controller
     public function admin()
     {
         $roles = Role::all();
-        $user = ModelHasRole::with(['user', 'role'])->where('role_id',  '2')->get();
+        $user = ModelHasRole::with(['user', 'role'])->where('role_id',  '2,3')->get();
         return view('dashboard.admin', [
             'user' => $user,
             'roles' => $roles
@@ -42,7 +43,8 @@ class DashboardController extends Controller
     public function TableUserManage()
     {
         $users = ModelHasRole::with(['user', 'role'])
-            ->whereNotIn('role_id', [1])
+            ->whereNotIn('role_id', [0])
+            ->where('model_id', '!=', Auth::id())
             ->get();
 
         return DataTables::of($users)
@@ -67,8 +69,19 @@ class DashboardController extends Controller
                 return $user->user ? $user->user->email : 'N/A'; // Pengecekan null
             })
             ->addColumn('role', function ($user) {
-                return '<span class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 rounded-full bg-purple-50 ring-1 ring-purple-700/20 ring-inset">' . $user->role->name . '</span>';
+                $roleColors = [
+                    'admin' => 'bg-red-100 text-red-700 ring-red-700/20',
+                    'peminjam' => 'bg-blue-100 text-blue-700 ring-blue-700/20',
+                    'petugas' => 'bg-green-100 text-green-700 ring-green-700/20',
+                ];
+
+                $colorClass = $roleColors[$user->role->name] ?? 'bg-gray-50 text-gray-700 ring-gray-700/20';
+
+                return '<span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full ring-1 ring-inset ' . $colorClass . '">' .
+                    $user->role->name .
+                    '</span>';
             })
+
             ->addColumn('option', 'dashboard.dropdown-admin') // Pastikan view ini ada
             ->rawColumns(['name', 'email', 'role', 'option']) // Mengizinkan HTML di kolom ini
             ->make(true);
@@ -119,5 +132,43 @@ class DashboardController extends Controller
     public function user()
     {
         return view('dashboard.user');
+    }
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6|confirmed',
+            'role_id' => 'required|exists:roles,id',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Simpan User
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+
+            // Simpan Role di model_has_roles
+            DB::table('model_has_roles')->insert([
+                'role_id' => $request->role_id,
+                'model_type' => User::class,
+                'model_id' => $user->id,
+            ]);
+
+            DB::commit();
+            return response()->json(['success' => 'User berhasil ditambahkan!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Terjadi kesalahan!'], 500);
+        }
+    }
+
+    public function getRoles()
+    {
+        $roles = Role::all();
+        return response()->json($roles);
     }
 }

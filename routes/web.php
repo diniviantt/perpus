@@ -39,7 +39,8 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
         Route::delete('/delete-user/{id}', [DashboardController::class, 'destroy'])->name('delete-user');
         Route::patch('/rolesupdate/{id}', [DashboardController::class, 'update'])->name('roles.update');
         Route::get('/get-user/{id}', [DashboardController::class, 'getUser'])->name('dashboard.get-user');
-        Route::post('add-user', [RegisteredUserController::class, 'register'])->name('add-user');
+        Route::post('add-user', [DashboardController::class, 'register'])->name('add-user');
+        Route::get('get-roles', [DashboardController::class, 'getRoles'])->name('get-roles');
     });
 
     Route::middleware(['role:user'])->group(function () {

@@ -135,10 +135,10 @@
                                 </div>
 
                                 <div>
-                                    <x-input-label for="address" :text="__('Role')" />
+                                    <x-input-label for="role_id" :text="__('Role')" />
                                     <select
                                         class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 truncate transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-lg shrink focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500 placeholder:text-sm placeholder:text-slate-300"
-                                        name="" id="">
+                                        name="role_id" id="role_id">
                                         <option value="Pilih Role">Pilih Role</option>
                                     </select>
                                     <x-input-error :messages="$errors->get('address')" class="mt-2" />
@@ -273,10 +273,7 @@
                 $("input[name='name']").val('');
                 $("input[name='email']").val('');
                 $("input[name='password']").val('');
-                $("input[name='alamat']").val('');
-                $("input[name='notelp']").val('');
-                $("select[name='provinsi']").val('');
-                $("select[name='kecamatan']").val('');
+                $("input[name='role_id']").val('');
 
                 window.Alpine.store('modal', {
                     modalAddUser: true,
@@ -309,56 +306,87 @@
                 });
             }
 
-            $('#AddUser').on('submit', function(event) {
-                event.preventDefault();
+            $(document).ready(function() {
+                $('#AddUser').on('submit', function(e) {
+                    e.preventDefault(); // Mencegah reload halaman
 
-                let namalengkap = $("input[name='namalengkap']").val();
-                let nama = $("input[name='nama']").val();
-                let email = $("input[name='email']").val();
-                let password = $("input[name='password']").val();
-                let alamat = $("input[name='alamat']").val();
-                let notelp = $("input[name='notelp']").val();
-                let provinsi = $("select[name='provinsi']").val();
-                let kecamatan = $("select[name='kecamatan']").val();
+                    let form = $(this);
+                    let formData = new FormData(this); // Gunakan FormData untuk menangani semua input
+                    let submitButton = form.find('button[type="submit"]');
 
-                $.ajax({
-                    url: `${window.location.origin}/dashboard/add-user`, // Endpoint untuk tambah user
-                    type: 'POST',
-                    data: {
-                        namalengkap: namalengkap,
-                        nama: nama,
-                        email: email,
-                        password: password,
-                        alamat: alamat,
-                        notelp: notelp,
-                        provinsi: provinsi,
-                        kecamatan: kecamatan,
-                        _token: $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.status === true) {
+                    // Nonaktifkan tombol submit agar tidak double submit
+                    submitButton.prop('disabled', true).text('Processing...');
+
+                    $.ajax({
+                        url: form.attr('action'), // Ambil URL dari atribut action form
+                        type: "POST",
+                        data: formData,
+                        contentType: false, // Agar FormData tidak diubah menjadi string
+                        processData: false, // Agar FormData tidak diproses secara otomatis
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr(
+                                'content') // Ambil CSRF token dari meta tag
+                        },
+                        success: function(response) {
+                            console.log(response); // Debugging: lihat data dari backend
+                            if (response.status === true) {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: 'User role has been updated.',
+                                    icon: 'success',
+                                    confirmButtonText: 'OK',
+                                    allowOutsideClick: false
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        window.location
+                                    .reload(); // Reload halaman jika sukses
+                                    }
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Warning!',
+                                    text: response.message || 'Something went wrong.',
+                                    icon: 'warning'
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error(xhr
+                            .responseText); // Debugging: lihat error response di console
+
+                            let errorMessage = 'There was an error updating the user role.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON
+                                .message; // Ambil pesan error dari Laravel
+                            }
+
                             Swal.fire({
-                                title: 'Success!',
-                                text: 'User has been added successfully.',
-                                icon: 'success',
-                                confirmButtonText: 'OK',
-                                allowOutsideClick: false
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    window.location.reload(); // Reload data tabel
-                                }
+                                title: 'Error!',
+                                text: errorMessage,
+                                icon: 'error',
+                                confirmButtonText: 'Try Again'
                             });
+
+                            // Tampilkan error detail jika ada
+                            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                let errors = xhr.responseJSON.errors;
+                                let errorText = '';
+                                $.each(errors, function(key, messages) {
+                                    errorText += messages[0] + '\n';
+                                });
+
+                                Swal.fire({
+                                    title: 'Validation Error!',
+                                    text: errorText,
+                                    icon: 'warning'
+                                });
+                            }
+                        },
+                        complete: function() {
+                            submitButton.prop('disabled', false).text(
+                            'Submit'); // Aktifkan kembali tombol
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error(xhr.responseText);
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'There was an error adding the user.',
-                            icon: 'error',
-                            confirmButtonText: 'Try Again'
-                        });
-                    }
+                    });
                 });
             });
 
@@ -368,19 +396,22 @@
                 $('#modal-modalAddUser-dialog').addClass("visible");
 
                 // Kosongkan input form sebelum ditampilkan
-                $("input[name='namalengkap']").val('');
-                $("input[name='nama']").val('');
+                $("input[name='name']").val('');
                 $("input[name='email']").val('');
                 $("input[name='password']").val('');
-                $("input[name='alamat']").val('');
-                $("input[name='notelp']").val('');
-                $("select[name='provinsi']").val('');
-                $("select[name='kecamatan']").val('');
+                $("input[name='role_id']").val('');
 
                 window.Alpine.store('modal', {
                     modalUser: true,
                 });
             }
+            $.get("{{ route('get-roles') }}", function(roles) {
+                let roleSelect = $("#role_id");
+                roles.forEach(role => {
+                    roleSelect.append(`<option value="${role.id}">${role.name}</option>`);
+                });
+            });
+
 
 
             // Confirm delete user
