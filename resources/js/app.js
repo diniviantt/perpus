@@ -7,6 +7,7 @@ Alpine.store("modal", {
     testing: false,
     modalUser: false,
     modalAddUser: false,
+    modalUpload: false,
 });
 
 window.Alpine = Alpine;

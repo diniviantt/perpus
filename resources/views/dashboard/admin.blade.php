@@ -24,7 +24,6 @@
                             d="M21.5,2H12.118L8.118,0H2.5C1.122,0,0,1.122,0,2.5V22H10.298c-.2-.32-.381-.653-.538-1H1V7H23v4.026c.36,.306,.695,.641,1,1.003V4.5c0-1.378-1.121-2.5-2.5-2.5ZM1,6V2.5c0-.827,.673-1.5,1.5-1.5H7.882l4,2h9.618c.827,0,1.5,.673,1.5,1.5v1.5H1Zm16.5,5c-3.584,0-6.5,2.916-6.5,6.5s2.916,6.5,6.5,6.5,6.5-2.916,6.5-6.5-2.916-6.5-6.5-6.5Zm0,12c-3.032,0-5.5-2.468-5.5-5.5s2.468-5.5,5.5-5.5,5.5,2.468,5.5,5.5-2.468,5.5-5.5,5.5Zm.5-6h2.5v1h-2.5v2.5h-1v-2.5h-2.5v-1h2.5v-2.5h1v2.5Z" />
                     </svg>
                 </a>
-                <!-- Tooltip -->
                 <span
                     class="absolute top-0 px-3 py-2 text-xs text-white transition-opacity duration-300 -translate-x-1/2 -translate-y-full rounded-md opacity-0 pointer-events-none bg-gray-800/40 left-1/2 whitespace-nowrap group-hover:opacity-100">
                     Tambah Data
@@ -32,18 +31,31 @@
             </div>
 
             <!-- Tombol Import Data -->
-            <div class="relative w-full rounded-md group">
-                <a href="#"
-                    class="flex items-center justify-center w-full h-full gap-2 px-4 py-2 text-sm font-normal text-gray-400 transition duration-300 ease-in-out bg-transparent rounded-r-lg ">
+            <div class="relative w-full border-r border-gray-600 group">
+                <a href="javascript:void(0);" onclick="importData()"
+                    class="flex items-center justify-center w-full h-full gap-2 px-4 py-2 text-sm font-normal text-gray-400 transition duration-300 ease-in-out bg-transparent">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
                         <path
                             d="M17.5,11c-3.58,0-6.5,2.92-6.5,6.5s2.92,6.5,6.5,6.5,6.5-2.92,6.5-6.5-2.92-6.5-6.5-6.5Zm0,12c-3.03,0-5.5-2.47-5.5-5.5s2.47-5.5,5.5-5.5,5.5,2.47,5.5,5.5-2.47,5.5-5.5,5.5Zm3.06-6.56c.58,.58,.58,1.54,0,2.12l-2.17,2.17-.71-.71,2.02-2.02h-5.71v-1h5.71l-1.94-1.94,.71-.71,2.09,2.09Zm-9.01-5.01c-.24,.24-.47,.49-.69,.76-.26-.12-.55-.19-.86-.19-1.1,0-2,.9-2,2,0,.81,.48,1.5,1.17,1.82-.07,.33-.11,.67-.14,1.02-1.18-.41-2.03-1.52-2.03-2.84,0-1.65,1.35-3,3-3,.57,0,1.1,.16,1.55,.43ZM1,20V3C1,1.9,1.9,1,3,1h1v7H15V1h.42l4.58,4.58v3.8c.34,.11,.68,.23,1,.38V5.16L15.83,0H3C1.35,0,0,1.35,0,3V21H9.75c-.15-.32-.27-.66-.38-1H1ZM14,7H5V1H14V7Z" />
                     </svg>
                 </a>
-                <!-- Tooltip -->
                 <span
                     class="absolute top-0 px-3 py-2 text-xs text-white transition-opacity duration-300 -translate-x-1/2 -translate-y-full rounded-md opacity-0 pointer-events-none bg-gray-800/40 left-1/2 whitespace-nowrap group-hover:opacity-100">
                     Import Data
+                </span>
+            </div>
+
+            <!-- Tombol Unduh Data -->
+            <div class="relative w-full rounded-md group">
+                <a href="javascript:void(0);" onclick="downloadData()"
+                    class="flex items-center justify-center w-full h-full gap-2 px-4 py-2 text-sm font-normal text-gray-400 transition duration-300 ease-in-out bg-transparent rounded-r-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
+                        <path d="M14,2V11H19L12,18L5,11H10V2H14M2,20H22V22H2V20Z" />
+                    </svg>
+                </a>
+                <span
+                    class="absolute top-0 px-3 py-2 text-xs text-white transition-opacity duration-300 -translate-x-1/2 -translate-y-full rounded-md opacity-0 pointer-events-none bg-gray-800/40 left-1/2 whitespace-nowrap group-hover:opacity-100">
+                    Unduh Template
                 </span>
             </div>
         </div>
@@ -64,7 +76,7 @@
         </table>
     </x-card>
 
-    <div x-data="{ modalUser: false, modalAddUser: false }" x-init="$store.modal = { modalUser: modalUser, modalAddUser: modalAddUser }">
+    <div x-data="{ modalUser: false, modalAddUser: false, modalUpload: false }" x-init="$store.modal = { modalUser: modalUser, modalAddUser: modalAddUser, modalUpload: modalUpload }">
         <x-slot name="modals">
             <!-- Modal Edit User -->
             <form id="editUser">
@@ -163,7 +175,6 @@
             </form>
         </x-slot>
     </div>
-
 
     <x-slot name="scripts">
         <script>
@@ -273,6 +284,7 @@
                 $("input[name='name']").val('');
                 $("input[name='email']").val('');
                 $("input[name='password']").val('');
+                $("input[name='password_confirmation']").val('');
                 $("input[name='role_id']").val('');
 
                 window.Alpine.store('modal', {
@@ -308,87 +320,76 @@
 
             $(document).ready(function() {
                 $('#AddUser').on('submit', function(e) {
-                    e.preventDefault(); // Mencegah reload halaman
+                    e.preventDefault();
 
                     let form = $(this);
-                    let formData = new FormData(this); // Gunakan FormData untuk menangani semua input
+                    let formData = new FormData(this);
                     let submitButton = form.find('button[type="submit"]');
 
-                    // Nonaktifkan tombol submit agar tidak double submit
                     submitButton.prop('disabled', true).text('Processing...');
 
                     $.ajax({
-                        url: form.attr('action'), // Ambil URL dari atribut action form
+                        url: form.attr('action'),
                         type: "POST",
                         data: formData,
-                        contentType: false, // Agar FormData tidak diubah menjadi string
-                        processData: false, // Agar FormData tidak diproses secara otomatis
+                        contentType: false,
+                        processData: false,
                         headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr(
-                                'content') // Ambil CSRF token dari meta tag
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
                         success: function(response) {
-                            console.log(response); // Debugging: lihat data dari backend
-                            if (response.status === true) {
-                                Swal.fire({
-                                    title: 'Success!',
-                                    text: 'User role has been updated.',
-                                    icon: 'success',
-                                    confirmButtonText: 'OK',
-                                    allowOutsideClick: false
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        window.location
-                                    .reload(); // Reload halaman jika sukses
-                                    }
-                                });
-                            } else {
+                            if (!response.success) {
                                 Swal.fire({
                                     title: 'Warning!',
                                     text: response.message || 'Something went wrong.',
-                                    icon: 'warning'
+                                    icon: 'warning',
+                                    confirmButtonText: 'OK',
+                                    showConfirmButton: true
                                 });
-                            }
-                        },
-                        error: function(xhr) {
-                            console.error(xhr
-                            .responseText); // Debugging: lihat error response di console
-
-                            let errorMessage = 'There was an error updating the user role.';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMessage = xhr.responseJSON
-                                .message; // Ambil pesan error dari Laravel
+                                return;
                             }
 
                             Swal.fire({
-                                title: 'Error!',
-                                text: errorMessage,
-                                icon: 'error',
-                                confirmButtonText: 'Try Again'
-                            });
+                                title: 'Success!',
+                                text: 'User berhasil ditambahkan!',
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                showConfirmButton: true
+                            })
+                            $('#modal-modalAddUser-dialog').removeClass("visible");
+                            $('#modal-modalAddUser-dialog').addClass("invisible");
 
-                            // Tampilkan error detail jika ada
-                            if (xhr.responseJSON && xhr.responseJSON.errors) {
-                                let errors = xhr.responseJSON.errors;
-                                let errorText = '';
-                                $.each(errors, function(key, messages) {
-                                    errorText += messages[0] + '\n';
-                                });
-
-                                Swal.fire({
-                                    title: 'Validation Error!',
-                                    text: errorText,
-                                    icon: 'warning'
-                                });
+                            $('#userTable').DataTable().ajax.reload(null,
+                                false); // Refresh DataTable
+                            form[0].reset(); // Reset form setelah sukses
+                        },
+                        error: function(xhr) {
+                            let errorText = xhr.responseJSON?.message || 'Terjadi kesalahan.';
+                            if (xhr.responseJSON?.errors) {
+                                errorText = Object.values(xhr.responseJSON.errors).flat().join(
+                                    '\n');
                             }
+                            Swal.fire({
+                                title: 'Error!',
+                                text: errorText,
+                                icon: 'error',
+                                confirmButtonText: 'OK',
+                                showConfirmButton: true
+                            });
                         },
                         complete: function() {
-                            submitButton.prop('disabled', false).text(
-                            'Submit'); // Aktifkan kembali tombol
+                            submitButton.prop('disabled', false).text('Submit');
                         }
                     });
                 });
+
+
+                // Event saat modal tertutup, reset form
+                $('#AddUser').on('hidden.bs.modal', function() {
+                    $('#AddUser')[0].reset(); // Reset form setelah modal ditutup
+                });
             });
+
 
             // Open modal for adding user
             function AddUser() {
@@ -399,12 +400,14 @@
                 $("input[name='name']").val('');
                 $("input[name='email']").val('');
                 $("input[name='password']").val('');
+                $("input[name='password_confirmation']").val('');
                 $("input[name='role_id']").val('');
 
                 window.Alpine.store('modal', {
                     modalUser: true,
                 });
             }
+
             $.get("{{ route('get-roles') }}", function(roles) {
                 let roleSelect = $("#role_id");
                 roles.forEach(role => {
