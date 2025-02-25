@@ -41,6 +41,8 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
         Route::get('/get-user/{id}', [DashboardController::class, 'getUser'])->name('dashboard.get-user');
         Route::post('add-user', [DashboardController::class, 'register'])->name('add-user');
         Route::get('get-roles', [DashboardController::class, 'getRoles'])->name('get-roles');
+        Route::get('tempt-export', [DashboardController::class, 'export'])->name('tempt-export');
+        Route::post('impot-user', [DashboardController::class, 'import'])->name('import-user');
     });
 
     Route::middleware(['role:user'])->group(function () {

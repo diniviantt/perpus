@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\UserTemplateExport;
+use App\Imports\UserImport;
 use App\Models\Buku;
 use App\Models\Kategori;
 use App\Models\ModelHasRole;
@@ -14,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 
 class DashboardController extends Controller
@@ -170,5 +173,25 @@ class DashboardController extends Controller
     {
         $roles = Role::all();
         return response()->json($roles);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'import' => 'required|file|mimes:xlsx,xls|max:2048'
+        ]);
+
+        try {
+            Excel::import(new UserImport, $request->file('import'));
+
+            return response()->json(['success' => 'Data user berhasil diimport!']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function export()
+    {
+        return Excel::download(new UserTemplateExport, 'user_template.xlsx');
     }
 }

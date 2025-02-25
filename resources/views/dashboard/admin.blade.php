@@ -47,7 +47,7 @@
 
             <!-- Tombol Unduh Data -->
             <div class="relative w-full rounded-md group">
-                <a href="javascript:void(0);" onclick="downloadData()"
+                <a href="{{ route('tempt-export') }}"
                     class="flex items-center justify-center w-full h-full gap-2 px-4 py-2 text-sm font-normal text-gray-400 transition duration-300 ease-in-out bg-transparent rounded-r-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
                         <path d="M14,2V11H19L12,18L5,11H10V2H14M2,20H22V22H2V20Z" />
@@ -167,6 +167,45 @@
                         </x-modal-button>
 
                         <x-modal-button x-on:click="$store.modal.modalAddUser = false" type="button"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Batal') }}
+                        </x-modal-button>
+                    </div>
+                </x-modal>
+            </form>
+
+            <form id="UploadUser" action="{{ route('import-user') }}" method="POST" autocomplete="off"
+                class="space-y-4">
+                @csrf
+                <x-modal modal="$store.modal.modalUpload" dialog="modal-modalUpload-dialog">
+                    <div class="px-5 bg-white sm:p-7 sm:pb-0">
+                        <div class="mt-5 sm:mt-0">
+                            <x-modal-title :label="__('Upload Data User')" />
+                            <div class="my-2 space-y-3">
+                                <div>
+                                    <span
+                                        class="block text-sm text-red-700 font-medium bg-red-100 border border-red-400 py-2 px-3 rounded-lg">
+                                        Pastikan sudah mengunduh file! <a href="{{ route('tempt-export') }}"
+                                            class="text-blue-700 underline">Unduh
+                                            Template</a>
+                                    </span>
+                                    <input type="file" name="import" id="file" autocomplete="off"
+                                        class="mt-2 w-full block py-3 px-4 rounded-lg text-sm text-gray-700 bg-white border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-indigo-500/30 focus:border-indigo-500 placeholder:text-gray-400"
+                                        required />
+                                    <x-input-error :messages="$errors->get('file')" class="mt-2" />
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-4 sm:flex sm:flex-row-reverse">
+                        <x-modal-button type="submit"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Upload') }}
+                        </x-modal-button>
+
+                        <x-modal-button x-on:click="$store.modal.modalUpload = false" type="button"
                             class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
                             {{ __('Batal') }}
                         </x-modal-button>
@@ -415,6 +454,62 @@
                 });
             });
 
+            function importData() {
+                $('#modal-modalUpload-dialog').removeClass("invisible");
+                $('#modal-modalUpload-dialog').addClass("visible");
+
+                window.Alpine.store('modal', {
+                    modalUpload: true,
+                });
+            }
+
+            $(document).ready(function() {
+                $("#UploadUser").submit(function(e) {
+                    e.preventDefault(); // Mencegah form submit langsung
+
+                    let fileInput = $("#file");
+                    let file = fileInput[0].files[0];
+                    let submitButton = $(this).find("[type='submit']");
+
+                    // Cek apakah file telah dipilih
+                    if (!file) {
+                        alert("Silakan pilih file sebelum mengupload!");
+                        return;
+                    }
+
+                    // Cek ekstensi file (hanya .xlsx dan .xls yang diperbolehkan)
+                    let allowedExtensions = /(\.xlsx|\.xls)$/i;
+                    if (!allowedExtensions.exec(file.name)) {
+                        alert("Format file tidak valid! Hanya file .xlsx atau .xls yang diperbolehkan.");
+                        return;
+                    }
+
+                    // Disable tombol upload untuk mencegah multiple submission
+                    submitButton.prop("disabled", true).text("Uploading...");
+
+                    // Kirim data via AJAX
+                    let formData = new FormData(this);
+
+                    $.ajax({
+                        url: $(this).attr("action"),
+                        type: "POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            alert("Data berhasil diimport!");
+                            fileInput.val(""); // Reset input file
+                            submitButton.prop("disabled", false).text(
+                                "Upload"); // Aktifkan kembali tombol
+                        },
+                        error: function(xhr) {
+                            alert("Terjadi kesalahan saat mengupload data.");
+                            submitButton.prop("disabled", false).text(
+                                "Upload"); // Aktifkan kembali tombol
+                        }
+                    });
+                });
+            });
 
 
             // Confirm delete user
