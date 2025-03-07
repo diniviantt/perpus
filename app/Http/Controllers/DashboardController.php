@@ -178,15 +178,21 @@ class DashboardController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'import' => 'required|file|mimes:xlsx,xls|max:2048'
+            'import' => 'required|mimes:xls,xlsx'
         ]);
 
         try {
+            $file = $request->file('import');
+
+            if (!$file) {
+                return response()->json(['message' => 'File tidak ditemukan!'], 400);
+            }
+
             Excel::import(new UserImport, $request->file('import'));
 
-            return response()->json(['success' => 'Data user berhasil diimport!']);
+            return response()->json(['message' => 'Data user berhasil diimport!'], 200);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Gagal mengimport data: ' . $e->getMessage()], 500);
         }
     }
 

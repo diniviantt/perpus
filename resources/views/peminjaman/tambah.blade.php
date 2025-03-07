@@ -113,7 +113,7 @@
                 @endrole
 
 
-                @role('user')
+                @role('peminjam')
                     <select name="users_id" class="form-control">
                         <option value="{{ $peminjam->user->id }}">{{ $peminjam->user->name }} ({{ $peminjam->user->email }})
                         </option>

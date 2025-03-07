@@ -2,28 +2,28 @@
     <x-header value="{{ __('Daftar Anggota') }}" />
     <x-session-status />
 
-    <a href="{{ route('anggota.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded mb-3">Tambah Anggota</a>
+    <a href="{{ route('anggota.create') }}" class="px-4 py-2 mb-3 text-white bg-blue-500 rounded">Tambah Anggota</a>
 
     <div class="w-full mt-5">
-        <div class="bg-white shadow-md rounded-lg mb-4">
-            <div class="py-3 px-4 border-b">
+        <div class="mb-4 bg-white rounded-lg shadow-md">
+            <div class="px-4 py-3 border-b">
                 <h2 class="text-lg font-semibold">{{ __('Daftar Anggota') }}</h2>
             </div>
-            <div class="overflow-x-auto p-3">
+            <div class="p-3 overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200" id="dataTableHover">
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                 No.</th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                 Nama Anggota</th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                 Email</th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                 Tombol Aksi</th>
                         </tr>
                     </thead>
@@ -37,14 +37,14 @@
                                     @role('admin')
                                         <div class="flex space-x-2">
                                             <a href="{{ route('anggota.show', $item->id) }}"
-                                                class="bg-blue-500 text-white px-3 py-1 rounded">
+                                                class="px-3 py-1 text-white bg-blue-500 rounded">
                                                 <i class="fa-solid fa-circle-info"></i>
                                             </a>
                                             <a href="{{ route('anggota.edit', $item->id) }}"
-                                                class="bg-yellow-500 text-white px-3 py-1 rounded">
+                                                class="px-3 py-1 text-white bg-yellow-500 rounded">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
-                                            <button class="bg-red-500 text-white px-3 py-1 rounded" data-toggle="modal"
+                                            <button class="px-3 py-1 text-white bg-red-500 rounded" data-toggle="modal"
                                                 data-target="#DeleteModal{{ $item->id }}">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
@@ -52,9 +52,9 @@
                                         </div>
                                     @endrole
 
-                                    @role('user')
+                                    @role('peminjam')
                                         <a href="{{ route('kategori.show', $item->id) }}"
-                                            class="bg-blue-500 text-white px-3 py-1 rounded">Detail</a>
+                                            class="px-3 py-1 text-white bg-blue-500 rounded">Detail</a>
                                     @endrole
                                 </td>
                             </tr>

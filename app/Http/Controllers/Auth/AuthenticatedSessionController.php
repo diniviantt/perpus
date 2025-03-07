@@ -92,7 +92,7 @@ class AuthenticatedSessionController extends Controller
                         'name' => $socialUser->getName() ?? 'User',
                         'email' => $socialUser->getEmail() ?? null,
                     ]);
-                    $user->assignRole('user');
+                    $user->assignRole('peminjam');
 
                     event(new Registered($user));
                 }

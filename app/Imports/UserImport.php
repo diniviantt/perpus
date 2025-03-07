@@ -2,45 +2,65 @@
 
 namespace App\Imports;
 
-use Maatwebsite\Excel\Concerns\ToModel;
-use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Illuminate\Validation\Rule;
 
-class UserImport implements ToModel
+class UserImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure
 {
+    use SkipsFailures;
+
     public function model(array $row)
     {
-        // Validasi password minimal 8 karakter
-        $validator = Validator::make(['password' => $row[2]], [
-            'password' => 'required|min:8',
-        ]);
+        // Cari role berdasarkan ID atau nama
+        $role = Role::where('id', $row['role_id'])
+            ->orWhere('name', $row['role_name'])
+            ->first();
 
-        if ($validator->fails()) {
-            throw new \Exception("Password harus minimal 8 karakter pada email: " . $row[1]);
+        if (!$role) {
+            return null; // Skip jika role tidak ditemukan
         }
 
-        // Buat user baru
-        $user = User::create([
-            'name' => $row[0],
-            'email' => $row[1],
-            'password' => Hash::make($row[2]), // Hash password sebelum disimpan
-        ]);
+        // Cek apakah user sudah ada
+        $user = User::where('email', $row['email'])->first();
 
-        // Set role berdasarkan ID (1=Admin, 2=Peminjam, 3=Petugas)
-        $role = Role::find($row[3]);
-
-        if ($role) {
-            // Masukkan role ke dalam tabel model_has_roles secara manual
-            DB::table('model_has_roles')->insert([
-                'role_id' => $role->id,
-                'model_type' => User::class,
-                'model_id' => $user->id
-            ]);
+        if ($user) {
+            // Jika user sudah ada, hanya update role tanpa mengubah password
+            $user->syncRoles([$role->name]);
+            return null;
         }
 
-        return $user;
+        // Jika user belum ada, buat baru
+        $newUser = new User([
+            'name'     => $row['nama'],
+            'email'    => $row['email'],
+            'password' => Hash::make($row['password']),
+        ]);
+
+        $newUser->save();
+        $newUser->assignRole($role->name);
+
+        return $newUser;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'nama' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email'), // Cegah email duplikat
+            ],
+            'password' => 'required|string|min:6',
+            'role_id' => 'required_without:role_name|exists:roles,id', // Bisa pakai role_id atau role_name
+            'role_name' => 'required_without:role_id|exists:roles,name', // Bisa pakai role_name atau role_id
+        ];
     }
 }

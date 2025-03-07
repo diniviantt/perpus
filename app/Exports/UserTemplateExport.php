@@ -4,33 +4,61 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Spatie\Permission\Models\Role;
 
-class UserTemplateExport implements FromArray, WithHeadings
+class UserTemplateExport implements FromArray, WithHeadings, WithColumnWidths, WithStyles
 {
-    public function array(): array
-    {
-        $roles = Role::select('id', 'name')->get()->toArray();
-
-        // Tambahkan 10 baris kosong untuk user mengisi data
-        $userTemplate = array_fill(0, 10, ['', '', '', '']);
-
-        // Tambahkan pemisah dan daftar role di bagian bawah tabel
-        $separator = [['---', '---', '---', '---']];
-        $roleHeader = [['ID Role', 'Nama Role']];
-        $roleData = array_map(fn($role) => [$role['id'], $role['name']], $roles);
-
-        // Gabungkan semua data
-        return array_merge($userTemplate, $separator, $roleHeader, $roleData);
-    }
-
     public function headings(): array
     {
         return [
-            'name',
-            'email',
-            'password',
-            'role_id',
+            ['Template Data User'], // Judul Template
+            ['nama', 'email', 'password', 'role_id', 'role_name'], // Header sesuai database
+        ];
+    }
+
+    public function array(): array
+    {
+        // Ambil daftar role dari database
+        $roles = Role::all()->map(function ($role) {
+            return [$role->id, $role->name];
+        })->toArray();
+
+        $data = [
+            ['Contoh Nama', 'email@example.com', 'password123', '1', 'admin'], // Data contoh
+        ];
+
+        // Tambahkan 10 baris kosong untuk input user
+        for ($i = 0; $i < 10; $i++) {
+            $data[] = ['', '', '', '', ''];
+        }
+
+        // Tambahkan informasi role ID di bawahnya
+        $data[] = ['', '', '', '', '']; // Spasi antar bagian
+        $data[] = ['Keterangan Role ID:', '', '', '', ''];
+        $data = array_merge($data, $roles);
+
+        return $data;
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 20, // Nama
+            'B' => 30, // Email
+            'C' => 20, // Password
+            'D' => 10, // Role ID
+            'E' => 15, // Role Name
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => ['font' => ['bold' => true, 'size' => 14]], // Judul Template ditebalkan & diperbesar
+            2 => ['font' => ['bold' => true]], // Header tabel ditebalkan
         ];
     }
 }

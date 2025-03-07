@@ -42,10 +42,10 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
         Route::post('add-user', [DashboardController::class, 'register'])->name('add-user');
         Route::get('get-roles', [DashboardController::class, 'getRoles'])->name('get-roles');
         Route::get('tempt-export', [DashboardController::class, 'export'])->name('tempt-export');
-        Route::post('impot-user', [DashboardController::class, 'import'])->name('import-user');
+        Route::post('import-user', [DashboardController::class, 'import'])->name('import-user');
     });
 
-    Route::middleware(['role:user'])->group(function () {
+    Route::middleware(['role:peminjam'])->group(function () {
         Route::get('/user', [DashboardController::class, 'user'])->name('dashboard.user');
     });
 

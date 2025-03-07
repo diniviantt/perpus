@@ -16,20 +16,8 @@ class RolePermissionSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Permission::create(['name' => 'create-data']);
-        // Permission::create(['name' => 'read-data']);
-        // Permission::create(['name' => 'update-data']);
-        // Permission::create(['name' => 'delete-data']);
-
-        $admin = Role::create(['name' => 'admin']);
-        // $admin->givePermissionTo('create-data');
-        // $admin->givePermissionTo('read-data');
-        // $admin->givePermissionTo('update-data');
-        // $admin->givePermissionTo('delete-data');
-
-        $user = Role::create(['name' => 'user']);
-        // $user->givePermissionTo('read-data');
-
-        $petugas = Role::create(['name' => 'petugas']);
+        $admin = Role::firstOrCreate(['name' => 'admin']);
+        $peminjam = Role::firstOrCreate(['name' => 'peminjam']);
+        $petugas = Role::firstOrCreate(['name' => 'petugas']);
     }
 }

@@ -55,7 +55,7 @@
         </div>
     @endrole
 
-    @role('user')
+    @role('peminjam')
         <div class="lg:col-auto">
             <div class="mb-4 bg-white rounded-lg shadow-md">
                 <div class="p-3 overflow-x-auto">

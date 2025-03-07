@@ -53,7 +53,7 @@
                                     </div>
                                 @endrole
 
-                                @role('user')
+                                @role('peminjam')
                                     <div class="flex space-x-2">
                                         <a href="{{ route('buku.show', $item->id) }}"
                                             class="px-2 py-1 text-white bg-blue-500 rounded-md hover:bg-blue-600">Detail</a>

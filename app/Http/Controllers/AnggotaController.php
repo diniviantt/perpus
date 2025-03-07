@@ -16,7 +16,7 @@ class AnggotaController extends Controller
 {
     public function index()
     {
-        $user = User::role('user')->get();
+        $user = User::role('peminjam')->get();
         return view('anggota.tampil', compact('user'));
     }
 

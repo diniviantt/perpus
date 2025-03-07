@@ -46,7 +46,7 @@
                                 <th scope="row" class="px-6 py-4 whitespace-nowrap">{{ $key + 1 }}</th>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $item->nama }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @role('user')
+                                    @role('peminjam')
                                         <div class="flex space-x-2">
                                             <a href="{{ route('kategori.show', $item->id) }}"
                                                 class="inline-flex items-center px-3 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600">
