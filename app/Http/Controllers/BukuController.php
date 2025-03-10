@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\BukuExport;
+use App\Imports\BukuImport;
 use App\Models\Buku;
 use App\Models\Profile;
 use App\Models\Kategori;
+use App\Models\KategoriBuku;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Maatwebsite\Excel\Facades\Excel;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class BukuController extends Controller
@@ -41,6 +45,7 @@ class BukuController extends Controller
             'tahun_terbit' => 'required',
             'deskripsi' => 'required',
             'gambar' => 'nullable|mimes:jpg,jpeg,png|max:2048',
+            'stock' => 'required',
         ], [
             'judul.required' => 'Judul tidak boleh kosong',
             'kode_buku.required' => 'Kode Buku Tidak Boleh Kosong',
@@ -52,9 +57,10 @@ class BukuController extends Controller
             'deskripsi.required' => 'Deskripsi tidak boleh kosong',
             'gambar.mimes' => 'Gambar harus berupa jpg, jpeg, atau png',
             'gambar.max' => 'Ukuran gambar tidak boleh lebih dari 2 MB',
+            'stock.required' => 'Stock tidak boleh kosong',
         ]);
 
-        $data = $request->only(['judul', 'kode_buku', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi']);
+        $data = $request->only(['judul', 'kode_buku', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi', 'stock']);
 
         if ($request->hasFile('gambar')) {
             $nama_gambar = time() . '.' . $request->gambar->extension();
@@ -75,8 +81,12 @@ class BukuController extends Controller
     public function show($id)
     {
         $buku = Buku::findOrFail($id);
+        $ketBuku = KategoriBuku::with('buku')->where('buku_id', $id)->get();
 
-        return view('buku.detail', compact('buku'));
+        return view('buku.detail', compact(
+            'buku',
+            'ketBuku'
+        ));
     }
 
     public function edit($id)
@@ -98,6 +108,7 @@ class BukuController extends Controller
             'tahun_terbit' => 'required',
             'deskripsi' => 'required',
             'gambar' => 'nullable|mimes:jpg,jpeg,png|max:2048',
+            'stock' => 'required',
         ], [
             'judul.required' => 'Judul tidak boleh kosong',
             'pengarang.required' => 'Pengarang tidak boleh kosong',
@@ -106,6 +117,8 @@ class BukuController extends Controller
             'deskripsi.required' => 'Deskripsi tidak boleh kosong',
             'gambar.mimes' => 'Gambar harus berupa jpg, jpeg, atau png',
             'gambar.max' => 'Ukuran gambar tidak boleh lebih dari 2 MB',
+            'stock.required' => 'Stock tidak boleh kosong',
+
         ]);
 
         if ($request->hasFile('gambar')) {
@@ -118,7 +131,7 @@ class BukuController extends Controller
             $buku->gambar = $nama_gambar;
         }
 
-        $buku->update($request->only(['judul', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi']));
+        $buku->update($request->only(['judul', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi', 'stock']));
 
         if ($request->has('kategori_buku')) {
             $buku->kategori_buku()->sync($request->kategori_buku);
@@ -141,5 +154,25 @@ class BukuController extends Controller
         Alert::success('Berhasil', 'Buku Berhasil Terhapus');
         return redirect()->route('buku.index');
     }
-  
+
+    public function export()
+    {
+        return Excel::download(new BukuExport, 'buku.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx',
+        ]);
+
+        $file = $request->file('file');
+        $nama_file = time() . '.' . $file->extension();
+        $file->move(public_path('import'), $nama_file);
+
+        Excel::import(new BukuImport, public_path('import/' . $nama_file));
+
+        Alert::success('Berhasil', 'Data Buku Berhasil Diimport');
+        return redirect()->route('buku.index');
+    }
 }

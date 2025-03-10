@@ -517,8 +517,11 @@
                                     submitButton.prop("disabled", false).text("Upload");
 
                                     // Tutup modal
-                                    $('#modal-modalUpload-dialog').addClass("visible");
-                                    $('#modal-modalUpload-dialog').removeClass("invisible");
+                                    $('#modal-modalUpload-dialog').removeClass("visible");
+                                    $('#modal-modalUpload-dialog').addClass("invisible");
+
+                                    $('#userManage').DataTable().ajax.reload(null,
+                                        false);
                                 }
                             });
                         },

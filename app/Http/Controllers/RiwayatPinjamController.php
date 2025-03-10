@@ -27,13 +27,14 @@ class RiwayatPinjamController extends Controller
     public function create()
     {
         $iduser = Auth::id();
-        $buku = Buku::where('status', 'In Stock')->get();
+        $buku = Buku::where('stock', '>', 0)->get();
+
 
         // Periksa apakah pengguna memiliki peran 'user'
-        if (Auth::user()->hasRole('user')) {
+        if (Auth::user()->hasRole('peminjam')) {
             // Ambil pengguna dengan peran 'user'
             $peminjam = User::whereHas('roles', function ($query) {
-                $query->where('name', 'user');
+                $query->where('name', 'peminjam');
             })->get();
         } else {
             // Ambil pengguna dengan role_id > 1 dari ModelHasRole
@@ -51,37 +52,48 @@ class RiwayatPinjamController extends Controller
                 'buku_id' => 'required'
             ],
             [
-                'users_id.required' => 'Harap Masukan Nama Peminjam',
-                'buku_id.required' => 'Masukan Buku yang akan dipinjam'
+                'users_id.required' => 'Harap Masukkan Nama Peminjam',
+                'buku_id.required' => 'Masukkan Buku yang akan dipinjam'
             ]
         );
+
         $request['tanggal_pinjam'] = Carbon::now()->toDateString();
         $request['tanggal_wajib_kembali'] = Carbon::now()->addDay(7)->toDateString();
 
-        $buku = Buku::findOrFail($request->buku_id)->only('status');
+        $buku = Buku::findOrFail($request->buku_id);
 
-        $count = Peminjaman::where('users_id', $request->users_id)->where('tanggal_pengembalian', null)->count();
+        $count = Peminjaman::where('users_id', $request->users_id)
+            ->where('tanggal_pengembalian', null)
+            ->count();
 
         if ($count >= 3) {
             Alert::warning('Gagal', 'User telah mencapai limit untuk meminjam buku');
             return redirect()->route('peminjaman.create');
-        } else {
-            try {
-                DB::beginTransaction();
-                // Proses insert tabel riwayat_pinjam
-                Peminjaman::create($request->all());
-                // Proses update tabel buku
-                $buku = Buku::findOrFail($request->buku_id);
-                $buku->status = 'dipinjam';
-                $buku->save();
-                DB::commit();
+        }
 
+        if ($buku->stock <= 0) {
+            Alert::warning('Gagal', 'Stok buku habis, tidak bisa dipinjam');
+            return redirect()->route('peminjaman.create');
+        }
 
-                Alert::success('Berhasil', 'Berhasil Meminjam Buku');
-                return redirect()->route('peminjaman.index');
-            } catch (\Throwable $th) {
-                DB::rollback();
-            }
+        try {
+            DB::beginTransaction();
+
+            // Proses insert ke tabel peminjaman
+            Peminjaman::create($request->all());
+
+            // Kurangi stok buku
+            $buku->stock -= 1;
+            $buku->save();
+
+            DB::commit();
+
+            Alert::success('Berhasil', 'Berhasil Meminjam Buku');
+            return redirect()->route('peminjaman.index');
+        } catch (\Throwable $th) {
+            DB::rollback();
+            Alert::error('Gagal', 'Terjadi kesalahan saat meminjam buku');
+            return redirect()->route('peminjaman.create');
         }
     }
 }

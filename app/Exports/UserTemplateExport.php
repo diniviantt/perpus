@@ -14,7 +14,6 @@ class UserTemplateExport implements FromArray, WithHeadings, WithColumnWidths, W
     public function headings(): array
     {
         return [
-            ['Template Data User'], // Judul Template
             ['nama', 'email', 'password', 'role_id', 'role_name'], // Header sesuai database
         ];
     }
@@ -26,9 +25,7 @@ class UserTemplateExport implements FromArray, WithHeadings, WithColumnWidths, W
             return [$role->id, $role->name];
         })->toArray();
 
-        $data = [
-            ['Contoh Nama', 'email@example.com', 'password123', '1', 'admin'], // Data contoh
-        ];
+
 
         // Tambahkan 10 baris kosong untuk input user
         for ($i = 0; $i < 10; $i++) {
@@ -57,8 +54,8 @@ class UserTemplateExport implements FromArray, WithHeadings, WithColumnWidths, W
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => ['font' => ['bold' => true, 'size' => 14]], // Judul Template ditebalkan & diperbesar
-            2 => ['font' => ['bold' => true]], // Header tabel ditebalkan
+            1 => ['font' => ['bold' => true, 'size' => 11]], // Judul Template ditebalkan & diperbesar
+
         ];
     }
 }

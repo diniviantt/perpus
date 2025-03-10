@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('tahun_terbit');
             $table->text('deskripsi');
             $table->string('gambar')->nullable();
-            $table->string('status')->default('In Stock');
+            $table->integer('stock')->default(0);
             $table->timestamps();
         });
     }

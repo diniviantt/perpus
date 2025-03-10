@@ -87,20 +87,29 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="gambar" class="block mb-1 font-semibold text-blue-500">Tambah Sampul Buku</label>
-                    <input type="file" name="gambar" id="gambar"
-                        class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('gambar')
+                    <label for="stock" class="block mb-1 font-semibold text-blue-500">Stock</label>
+                    <input type="number" name="stock"
+                        class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value="{{ old('stock', $buku->stock) }}">
+                    @error('stock')
                         <div class="mt-1 text-red-500">{{ $message }}</div>
                     @enderror
-                </div>
 
-                <div class="flex justify-end space-x-2">
-                    <a href="{{ route('buku.index') }}"
-                        class="px-4 py-2 text-white transition duration-200 bg-red-500 rounded-md hover:bg-red-600">Kembali</a>
-                    <button type="submit"
-                        class="px-4 py-2 text-white transition duration-200 bg-blue-500 rounded-md hover:bg-blue-600">Simpan</button>
-                </div>
+                    <div class="mb-4">
+                        <label for="gambar" class="block mb-1 font-semibold text-blue-500">Tambah Sampul Buku</label>
+                        <input type="file" name="gambar" id="gambar"
+                            class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        @error('gambar')
+                            <div class="mt-1 text-red-500">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="flex justify-end space-x-2">
+                        <a href="{{ route('buku.index') }}"
+                            class="px-4 py-2 text-white transition duration-200 bg-red-500 rounded-md hover:bg-red-600">Kembali</a>
+                        <button type="submit"
+                            class="px-4 py-2 text-white transition duration-200 bg-blue-500 rounded-md hover:bg-blue-600">Simpan</button>
+                    </div>
             </form>
         </div>
     </div>

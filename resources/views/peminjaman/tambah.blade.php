@@ -130,8 +130,8 @@
                 <select name="buku_id" class="form-control">
                     <option value="">Pilih Buku</option>
                     @forelse ($buku as $item)
-                        <option value="{{ $item->id }}">{{ $item->judul }} ({{ $item->kode_buku }}) -
-                            {{ $item->status }}</option>
+                        <option value="{{ $item->id }}">{{ $item->judul }} ({{ $item->kode_buku }}) |
+                            {{ $item->stock }} Tersedia</option>
                     @empty
                         <option value="" disabled>Tidak ada buku yang tersedia</option>
                     @endforelse

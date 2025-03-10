@@ -10,6 +10,7 @@ use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\PengembalianController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RiwayatPinjamController;
+use App\Models\Buku;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -58,6 +59,8 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
         'update' => 'buku.update',
         'destroy' => 'buku.destroy',
     ]);
+    Route::get('buku-export', [BukuController::class, 'export'])->name('buku-export');
+    Route::post('import-buku', [BukuController::class, 'import'])->name('import-buku');
     Route::resource('kategori', KategoriController::class)->names([
         'index' => 'kategori.index',
         'create' => 'kategori.create',

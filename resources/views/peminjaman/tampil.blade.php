@@ -75,8 +75,8 @@
                             @forelse ($pinjamanUser  as $item)
                                 <tr class="hover:bg-gray-100">
                                     <th class="px-4 py-2">{{ $loop->iteration }}</th>
-                                    <td class="px-4 py-2">{{ $item->user->name }}</td <td class="px-4 py-2">
-                                    {{ $item->buku->judul }}</td>
+                                    <td class="px-4 py-2">{{ $item->user->name }}</td>
+                                    <td class="px-4 py-2">{{ $item->buku->judul }}</td>
                                     <td class="px-4 py-2">{{ $item->buku->kode_buku }}</td>
                                     <td class="px-4 py-2">{{ $item->tanggal_pinjam }}</td>
                                     <td class="px-4 py-2">{{ $item->tanggal_wajib_kembali }}</td>

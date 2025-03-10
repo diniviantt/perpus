@@ -5,12 +5,14 @@ namespace App\Imports;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Validators\Failure;
 
 class UserImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure
 {
@@ -18,25 +20,27 @@ class UserImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFail
 
     public function model(array $row)
     {
-        // Cari role berdasarkan ID atau nama
+        Log::info('Processing row:', $row);
+
         $role = Role::where('id', $row['role_id'])
             ->orWhere('name', $row['role_name'])
             ->first();
 
         if (!$role) {
-            return null; // Skip jika role tidak ditemukan
+            Log::warning('Role not found for:', $row);
+            return null;
         }
 
-        // Cek apakah user sudah ada
         $user = User::where('email', $row['email'])->first();
 
         if ($user) {
-            // Jika user sudah ada, hanya update role tanpa mengubah password
+            Log::info('User already exists, updating role:', ['email' => $row['email']]);
             $user->syncRoles([$role->name]);
             return null;
         }
 
-        // Jika user belum ada, buat baru
+        Log::info('Creating new user:', ['email' => $row['email']]);
+
         $newUser = new User([
             'name'     => $row['nama'],
             'email'    => $row['email'],
@@ -48,6 +52,17 @@ class UserImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFail
 
         return $newUser;
     }
+
+    public function onFailure(Failure ...$failures)
+    {
+        foreach ($failures as $failure) {
+            Log::error('Import Validation Failed:', [
+                'row' => $failure->row(),
+                'errors' => $failure->errors(),
+            ]);
+        }
+    }
+
 
     public function rules(): array
     {

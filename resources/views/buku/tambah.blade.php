@@ -85,6 +85,16 @@
                 </div>
 
                 <div class="mb-4">
+                    <label for="stock" class="block mb-1 font-semibold text-blue-500">Stock</label>
+                    <input type="number"
+                        class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        name="stock" rows="2">{{ old('stock') }}</input>
+                    @error('stock')
+                        <div class="mt-1 text-red-500">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-4">
                     <label for="gambar" class="block mb-1 font-semibold text-blue-500">Tambah Sampul Buku</label>
                     <input type="file" name="gambar" id="gambar"
                         class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
