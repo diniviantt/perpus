@@ -82,7 +82,7 @@
 }
 .navbar-container,
 .main {
-    @apply ml-0 w-full md:ml-[260px] md:w-[calc(100%-260px)] transition-all duration-500 ease-in-out;
+    @apply ml-0 w-full md:ml-[260px] md:w-[calc(100%-260px)] transition-all duration-500 ease-in-out h-min;
 }
 .sidebar.close ~ .navbar-container,
 .sidebar.close ~ .main {
@@ -127,6 +127,10 @@
 }
 .show {
     @apply block absolute z-[1000];
+}
+
+#ListBuku_wrapper {
+    @apply w-full;
 }
 
 /* Snackbar */

@@ -16,7 +16,10 @@ class Peminjaman extends Model
         'buku_id',
         'tanggal_pinjam',
         'tanggal_wajib_kembali',
-        'tanggal_pengembalian'
+        'tanggal_pengembalian',
+        'keterlambatan',
+        'denda',
+        'status'
     ];
 
     public function user()

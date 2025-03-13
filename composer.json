@@ -29,6 +29,8 @@
         "realrashid/sweet-alert": "^7.2",
         "spatie/laravel-flash": "^1.9",
         "spatie/laravel-permission": "^6.3",
+        "symfony/http-client": "^6.4",
+        "symfony/mailgun-mailer": "^6.4",
         "yajra/laravel-datatables": "^10.1"
     },
     "require-dev": {

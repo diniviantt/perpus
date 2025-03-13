@@ -61,6 +61,8 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
     ]);
     Route::get('buku-export', [BukuController::class, 'export'])->name('buku-export');
     Route::post('import-buku', [BukuController::class, 'import'])->name('import-buku');
+    Route::get('list-buku', [BukuController::class, 'listBuku'])->name('list-buku');
+    Route::get('table-buku', [BukuController::class, 'tableBuku'])->name('table-buku');
     Route::resource('kategori', KategoriController::class)->names([
         'index' => 'kategori.index',
         'create' => 'kategori.create',
@@ -91,11 +93,30 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
         'destroy' => 'peminjaman.destroy',
     ]);
 
+
+    Route::get('/table-peminjaman', [RiwayatPinjamController::class, 'tablePeminjaman'])->name('table-peminjaman');
+
+
+    // Admin mengonfirmasi peminjaman (status: "Menunggu Pengambilan")
+    Route::put('/pinjam/{id}/konfirmasi', [RiwayatPinjamController::class, 'konfirmasiPinjam'])->name('pinjam.konfirmasi');
+
+    // User mengambil buku (status: "Dipinjam")
+    Route::put('/pinjam/{id}/ambil', [RiwayatPinjamController::class, 'ambilBuku'])->name('pinjam.ambil');
+
+    // User mengembalikan buku (status: "Dikembalikan", hitung keterlambatan & denda)
+    Route::put('/pinjam/{id}/kembalikan', [RiwayatPinjamController::class, 'kembalikanBuku'])->name('pinjam.kembalikan');
+    Route::get('/get-buku-pinjam', [RiwayatPinjamController::class, 'getBuku'])->name('pinjam.getbuku');
+
+
+
     Route::get('/cetaklaporan', CetakLaporanController::class);
 
-    Route::get('/pengembalian', [PengembalianController::class, 'index'])->name('pengembalian.index');
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/pengembalian', [PengembalianController::class, 'index'])->name('pengembalian.index');
 
-    Route::post('/pengembalian', [PengembalianController::class, 'pengembalian'])->name('pengembalian.create');
+        Route::post('/pengembalian', [PengembalianController::class, 'pengembalian'])->name('pengembalian.create');
+        Route::get('/get-buku/{id}', [PengembalianController::class, 'getBuku'])->name('pengembalian.getbuku');
+    });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

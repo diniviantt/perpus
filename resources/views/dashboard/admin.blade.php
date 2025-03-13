@@ -80,6 +80,7 @@
         <x-slot name="modals">
             <!-- Modal Edit User -->
             <form id="editUser">
+                @csrf
                 <x-modal modal="$store.modal.modalUser" dialog="modal-modalUser-dialog">
                     <div class="px-5 bg-white sm:p-7 sm:pb-0">
                         <div class="mt-5 sm:mt-0">

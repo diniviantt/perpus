@@ -8,6 +8,7 @@ Alpine.store("modal", {
     modalUser: false,
     modalAddUser: false,
     modalUpload: false,
+    modalPeminjaman: false,
 });
 
 window.Alpine = Alpine;

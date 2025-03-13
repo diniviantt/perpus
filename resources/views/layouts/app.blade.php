@@ -36,7 +36,7 @@
     <x-partials.navbar />
 
     <section class="main">
-        <div class="px-6">
+        <div class="h-full px-6">
             <main>
                 {{ $slot }}
             </main>

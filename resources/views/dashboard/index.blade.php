@@ -118,8 +118,31 @@
                                 <td class="px-6 py-4">{{ $item->tanggal_pinjam }}</td>
                                 <td class="px-6 py-4">{{ $item->tanggal_wajib_kembali }}</td>
                                 <td class="px-6 py-4">{{ $item->tanggal_pengembalian }}</td>
-                                <td class="px-6 py-4">{{ $item->status }}</td>
-                                <td class="px-6 py-4"></td>
+                                <td class="px-6 py-4">
+                                    @if ($item->status == 'dipinjam')
+                                        <span
+                                            class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-yellow-500 rounded-lg">
+                                            <i class="fa-solid fa-clock"></i> Dipinjam
+                                        </span>
+                                    @elseif ($item->status == 'dikembalikan')
+                                        <span
+                                            class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-green-500 rounded-lg">
+                                            <i class="fa-solid fa-check-circle"></i> Dikembalikan
+                                        </span>
+                                    @elseif ($item->status == 'menunggu pengambilan')
+                                        <span
+                                            class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-red-500 rounded-lg">
+                                            <i class="fa-solid fa-exclamation-circle"></i> Terlambat
+                                        </span>
+                                    @else
+                                        <span
+                                            class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-gray-500 rounded-lg">
+                                            <i class="fa-solid fa-question-circle"></i> Menunggu Konfirmasi
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <td class="px-6 py-4">{{ $item->denda }}</td>
                             </tr>
                         @endforeach
                     </tbody>

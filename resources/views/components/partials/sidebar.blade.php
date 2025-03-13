@@ -24,7 +24,7 @@
 
             <x-partials.sidebar-dropdown icon="fa-regular fa-folder" :text="__('Buku')" :active="Route::is('buku.*') ? 'active' : ''">
                 <x-partials.sidebar-dropdown-item :to="route('buku.index')" :text="__('Lihat Semua Buku')" :active="request()->routeIs('buku.index') ? 'active' : ''" />
-                <x-partials.sidebar-dropdown-item :to="route('buku.create')" :text="__('Tambah Buku')" :active="request()->routeIs('buku.create') ? 'active' : ''" />
+                <x-partials.sidebar-dropdown-item :to="route('list-buku')" :text="__('List Buku')" :active="request()->routeIs('list-buku') ? 'active' : ''" />
             </x-partials.sidebar-dropdown>
 
 

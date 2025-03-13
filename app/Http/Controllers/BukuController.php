@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\Facades\DataTables;
 
 class BukuController extends Controller
 {
@@ -174,5 +175,57 @@ class BukuController extends Controller
 
         Alert::success('Berhasil', 'Data Buku Berhasil Diimport');
         return redirect()->route('buku.index');
+    }
+
+    public function listBuku()
+    {
+        $buku = Buku::all();
+
+        return view('buku.list', compact('buku'));
+    }
+
+    public function tableBuku()
+    {
+        $buku = Buku::all();
+
+        return DataTables::of($buku)
+            ->addIndexColumn()
+            ->addColumn('gambar', function ($buku) {
+                if (isset($buku->gambar)) {
+                    $img = '<div class="flex flex-row items-center">
+                   <img src="' . asset('images/' . $buku->gambar) . '" alt="" class="object-cover">
+    </div>';
+                } else {
+                    $img = '<div class="flex flex-row items-center gap-x-3">
+                    <img src="' . asset('images/noImage.jpg') . '" alt="" class="object-cover rounded-full size-10">
+                    </div>';
+                }
+
+                return $img;
+            })
+            ->addColumn('judul', function ($buku) {
+                return $buku ? $buku->judul : 'N/A'; // Pengecekan null
+            })
+            ->addColumn('kode_buku', function ($buku) {
+                return $buku ? $buku->kode_buku : 'N/A'; // Pengecekan null  
+            })
+            ->addColumn('pengarang', function ($buku) {
+                return $buku ? $buku->pengarang : 'N/A';
+            })
+            ->addColumn('penerbit', function ($buku) {
+                return $buku ? $buku->penerbit : 'N/A';
+            })
+            ->addColumn('tahun_terbit', function ($buku) {
+                return $buku ? $buku->tahun_terbit : 'N/A';
+            })
+            ->addColumn('deskripsi', function ($buku) {
+                return $buku ? $buku->deskripsi : 'N/A';
+            })
+            ->addColumn('stock', function ($buku) {
+                return $buku ? $buku->stock : 'N/A';
+            })
+            ->addColumn('option', 'buku.dropdown') // Pastikan view ini ada
+            ->rawColumns(['gambar', 'judul', 'kode_buku', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi', 'stock', 'option']) // Mengizinkan HTML di kolom ini
+            ->make(true);
     }
 }
