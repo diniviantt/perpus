@@ -1,5 +1,5 @@
 <aside class="sidebar group">
-    <a href="/" class="logo">
+    <a href="{{ route('home') }}" class="logo">
         <x-application-logo
             class="transition-all duration-300 ease-in-out w-7 h-7 md:w-8 md:h-8 group-hover:-rotate-12" />
         {{ config('app.name', 'PerpustakaanSimple') }}
@@ -24,7 +24,10 @@
 
             <x-partials.sidebar-dropdown icon="fa-regular fa-folder" :text="__('Buku')" :active="Route::is('buku.*') ? 'active' : ''">
                 <x-partials.sidebar-dropdown-item :to="route('buku.index')" :text="__('Lihat Semua Buku')" :active="request()->routeIs('buku.index') ? 'active' : ''" />
-                <x-partials.sidebar-dropdown-item :to="route('list-buku')" :text="__('List Buku')" :active="request()->routeIs('list-buku') ? 'active' : ''" />
+                <x-partials.sidebar-dropdown-item :to="route('koleksi-buku')" :text="__('Lihat Semua Koleksi Buku')" :active="request()->routeIs('koleksi-buku') ? 'active' : ''" />
+                @role('admin')
+                    <x-partials.sidebar-dropdown-item :to="route('list-buku')" :text="__('List Buku')" :active="request()->routeIs('list-buku') ? 'active' : ''" />
+                @endrole
             </x-partials.sidebar-dropdown>
 
 

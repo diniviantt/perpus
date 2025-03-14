@@ -11,6 +11,7 @@ use App\Models\Peminjaman;
 use App\Models\Profile;
 use App\Models\Role;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class DashboardController extends Controller
 {
+
     public function index()
     {
         $iduser = Auth::id();
@@ -29,9 +31,27 @@ class DashboardController extends Controller
         $user = User::role('peminjam')->count();
         $riwayat_pinjam = Peminjaman::with(['user', 'buku'])->orderBy('updated_at', 'desc')->get();
         $jumlah_riwayat = Peminjaman::count();
-        $pinjamanUser = Peminjaman::where('users_id', $iduser)->where('tanggal_pengembalian', null)->count();
-        return view('dashboard.index', compact('kategori', 'buku', 'user', 'riwayat_pinjam', 'jumlah_riwayat'));
+        $pinjamanUser = Peminjaman::where('users_id', $iduser)->whereNull('tanggal_pengembalian')->count();
+        $masaPinjam = Peminjaman::with('buku')->where('users_id', $iduser)->whereNull('tanggal_pengembalian')->get();
+
+        $notifikasi = [];
+
+        foreach ($masaPinjam as $pinjam) {
+            $tanggalPeminjaman = Carbon::parse($pinjam->tanggal_peminjaman);
+            $sisaHari = 7 - $tanggalPeminjaman->diffInDays(Carbon::now());
+
+            if ($sisaHari > 2) {
+                $notifikasi[] = "📘 Masa peminjaman buku <strong>{$pinjam->buku->judul}</strong> berlangsung selama 7 hari.";
+            } elseif ($sisaHari > 0) {
+                $notifikasi[] = "⚠️ <strong>Peringatan!</strong> Sisa waktu peminjaman buku <strong>{$pinjam->buku->judul}</strong> tinggal $sisaHari hari.";
+            } else {
+                $notifikasi[] = "❗ <strong>Masa peminjaman buku {$pinjam->buku->judul} telah habis.</strong> Segera kembalikan!";
+            }
+        }
+
+        return view('dashboard.index', compact('kategori', 'buku', 'user', 'riwayat_pinjam', 'jumlah_riwayat', 'notifikasi'));
     }
+
 
     public function admin()
     {

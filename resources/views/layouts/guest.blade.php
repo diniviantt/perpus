@@ -27,7 +27,7 @@
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="w-full max-w-lg py-10 overflow-hidden bg-white shadow-md px-7 sm:px-16 sm:py-14 rounded-3xl">
                 <section class="mb-4">
-                    <a href="/">
+                    <a href="{{ route('home') }}">
                         <x-application-logo class="w-10 h-10 mx-auto sm:w-12 sm:h-12" />
                     </a>
                 </section>

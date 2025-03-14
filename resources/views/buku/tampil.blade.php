@@ -1,7 +1,10 @@
 <x-app-layout title="{{ __('Daftar Buku') }}">
     <x-header value="{{ __('Daftar Buku') }}" />
     <x-session-status />
-
+    @php
+        // Ambil ID buku yang ada di koleksi pengguna
+        $koleksiIds = $buku->pluck('buku_id')->toArray();
+    @endphp
     @role('admin')
         <div class="flex gap-4 mb-3">
             <!-- Tombol Tambah Buku -->
@@ -65,38 +68,34 @@
                         <div class="flex flex-col justify-between w-1/2 p-4">
                             <div>
                                 <h5 class="mb-3 text-lg font-bold leading-tight text-indigo-600">
-                                    <a href="{{ route('buku.show', $item->id) }}" class="hover:underline">
-                                        {{ $item->judul }}
-                                    </a>
+                                    <a href="{{ route('buku.show', $item->id) }}"
+                                        class="hover:underline">{{ $item->judul }}</a>
                                 </h5>
                                 <p class="text-sm text-gray-600">Kode Buku: {{ $item->kode_buku }}</p>
                                 <p class="text-sm text-gray-600">Pengarang: <span
                                         class="text-indigo-500">{{ $item->pengarang }}</span></p>
                                 <p class="text-sm text-gray-600">Kategori:</p>
                                 <div class="flex flex-wrap gap-1">
-                                    @foreach ($item->load('kategori_buku')->kategori_buku as $kategori)
+                                    @foreach ($item->kategori_buku as $kategori_buku)
                                         <span class="px-2 py-1 text-xs text-white bg-indigo-500 rounded-full">
-                                            {{ $kategori->nama }}
+                                            {{ $kategori_buku->nama }}
                                         </span>
                                     @endforeach
+
                                 </div>
 
                                 <p class="text-sm text-gray-600">Stock:</p>
                                 @if ($item->stock > 0)
-                                    <p class="px-2 py-1 text-xs text-white bg-green-500 rounded-full w-max">
-                                        Tersedia ({{ $item->stock }})
+                                    <p class="px-2 py-1 text-xs text-white bg-green-500 rounded-full w-max">Tersedia
+                                        ({{ $item->stock }})
                                     </p>
                                     <p class="mt-1 text-xs text-gray-500">Buku ini masih tersedia untuk dipinjam.</p>
                                 @else
-                                    <p class="px-2 py-1 text-xs text-white bg-red-500 rounded-full w-max">
-                                        Habis
-                                    </p>
+                                    <p class="px-2 py-1 text-xs text-white bg-red-500 rounded-full w-max">Habis</p>
                                     <p class="mt-1 text-xs text-gray-500">Maaf, buku ini sedang tidak tersedia.</p>
                                 @endif
-
                             </div>
 
-                            {{-- Tombol Aksi --}}
                             {{-- Tombol Aksi --}}
                             <div class="flex space-x-2">
                                 <a href="{{ route('buku.show', $item->id) }}"
@@ -109,31 +108,43 @@
                                     <a href="{{ route('buku.edit', $item->id) }}"
                                         class="flex items-center justify-center w-8 h-8 text-white transition bg-yellow-500 rounded hover:bg-yellow-600"
                                         aria-label="Edit" title="Edit Buku">
-                                        <i data-lucide="edit" class="w-4 h-4"></i>
+                                        <i data-lucide="square-pen" class="w-5 h-5"></i>
                                     </a>
                                     <button
-                                        class="flex items-center justify-center w-8 h-8 text-white transition bg-red-600 rounded hover:bg-red-700"
+                                        class="flex items-center justify-center w-8 h-8 text-white transition bg-red-500 rounded hover:bg-red-600"
                                         onclick="confirmDelete({{ $item->id }})" aria-label="Delete"
                                         title="Hapus Buku">
                                         <i data-lucide="trash" class="w-4 h-4"></i>
                                     </button>
                                 @else
-                                    {{-- Tombol Pinjam Buku --}}
-                                    <a href="{{ route('peminjaman.create') }}"
-                                        class="flex items-center justify-center w-8 h-8 text-white transition bg-green-600 rounded hover:bg-green-700"
+                                    <a href="{{ route('buku.show', $item->id) }}"
+                                        class="flex items-center justify-center w-8 h-8 text-white transition bg-blue-500 rounded hover:bg-blue-600"
                                         aria-label="Pinjam Buku" title="Pinjam Buku">
                                         <i data-lucide="book-open" class="w-4 h-4"></i>
                                     </a>
 
-                                    {{-- Tombol Koleksi Buku --}}
-                                    <button
-                                        class="flex items-center justify-center w-8 h-8 text-white transition bg-purple-600 rounded hover:bg-purple-700"
-                                        aria-label="Tambah ke Koleksi" title="Tambahkan ke Koleksi">
-                                        <i data-lucide="bookmark" class="w-4 h-4"></i>
-                                    </button>
+                                    @if (!in_array($item->id, $koleksiBukuIds))
+                                        <button id="btn-tambah-koleksi" onclick="tambahKoleksi({{ $item->id }})"
+                                            data-id="{{ $item->id }}"
+                                            class="flex items-center justify-center w-8 h-8 text-white transition bg-purple-600 rounded hover:bg-purple-700"
+                                            aria-label="Tambah ke Koleksi" title="Tambahkan ke Koleksi ">
+                                            <i data-lucide="bookmark" class="w-4 h-4"></i>
+                                        </button>
+                                        {{-- Ganti dengan kondisi yang sesuai untuk memeriksa apakah buku ada di koleksi --}}
+                                    @else
+                                        @foreach ($koleksi as $k)
+                                            @if ($k->buku_id == $item->id)
+                                                <button
+                                                    class="flex items-center justify-center w-8 h-8 text-white transition bg-red-500 rounded hover:bg-red-600"
+                                                    onclick="confirmDeleteKoleksi({{ $k->id }})"
+                                                    aria-label="Hapus dari Koleksi" title="Hapus dari Koleksi">
+                                                    <i data-lucide="bookmark-x" class="w-4 h-4"></i>
+                                                </button>
+                                            @endif
+                                        @endforeach
+                                    @endif
                                 @endrole
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -149,13 +160,43 @@
         </div>
     </div>
 
-
-    {{-- Tambahkan script untuk Lucide Icons --}}
-
-    </div>
     <x-slot name="scripts">
         <script>
             lucide.createIcons();
+
+            function confirmDeleteKoleksi(id) {
+
+                Swal.fire({
+                    title: "Apakah Anda yakin??",
+                    text: "Data yang dihapus tidak dapat dikembalikan!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Ya, hapus!",
+                    cancelButtonText: "Batal"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Jika pengguna mengkonfirmasi, lakukan penghapusan
+                        $.ajax({
+                            url: `/dashboard/koleksi-buku/${id}`, // Ganti dengan URL yang sesuai untuk menghapus koleksi
+                            type: "DELETE",
+                            data: {
+                                _token: "{{ csrf_token() }}"
+                            },
+                            success: function(response) {
+                                Swal.fire("Dihapus!", "Buku telah dihapus dari koleksi.", "success").then(
+                                    () => {
+                                        window.location.reload(true);
+                                    });
+                            },
+                            error: function() {
+                                Swal.fire("Error!", "Terjadi kesalahan saat menghapus buku.", "error");
+                            }
+                        });
+                    }
+                });
+            }
 
             function confirmDelete(id) {
                 window.Swal.fire({
@@ -191,11 +232,9 @@
                                     text: "Your file has been deleted.",
                                     icon: "success"
                                 }).then(() => {
-                                    window.location.reload(
-                                        true); // Reload page without cache
+                                    window.location.reload(true); // Reload page without cache
                                 });
                             },
-
                             error: function(xhr) {
                                 console.log("Error:", xhr.responseText); // Debug error di console
 
@@ -217,8 +256,31 @@
                     }
                 });
             }
+
+
+            function tambahKoleksi(id) {
+                // let bukuId = $(this).data("id"); // Ambil ID dari atribut data-id
+
+                $.ajax({
+                    url: "/dashboard/koleksi-buku/",
+                    type: "POST",
+                    data: {
+                        buku_id: id,
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        console.log(response)
+                        if (response.status === "success") {
+                            Swal.fire("Berhasil!", "Buku telah ditambahkan ke koleksi.", "success");
+                        } else if (response.status === "exists") {
+                            Swal.fire("Info", "Buku sudah ada di koleksi Anda.", "info");
+                        }
+                    },
+                    error: function() {
+                        Swal.fire("Error!", "Terjadi kesalahan.", "error");
+                    }
+                });
+            }
         </script>
     </x-slot>
-
-
 </x-app-layout>

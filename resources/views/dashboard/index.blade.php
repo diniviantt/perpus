@@ -51,6 +51,73 @@
         {{ __("You're logged in!") }}
     </x-card>
 
+    @if (!empty($notifikasi))
+        <div class="p-4 mt-10 mb-4 text-blue-800 bg-blue-100 rounded-lg">
+            @foreach ($notifikasi as $pesan)
+                <p class="mb-1">{!! $pesan !!}</p>
+            @endforeach
+        </div>
+    @endif
+
+
+    @role('peminjam')
+        <x-card class="p-6 mt-10 bg-white rounded-lg shadow-md">
+            <h1 class="mb-4 text-2xl font-extrabold">Riwayat Peminjaman</h1>
+            <div class="p-3 overflow-x-auto">
+                <table id="dataTableHover" class="min-w-full text-sm text-left divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">No.</th>
+                            <th scope="col" class="px-6 py-3">Judul Buku</th>
+                            <th scope="col" class="px-6 py-3">Kode Buku</th>
+                            <th scope="col" class="px-6 py-3">Tanggal Pinjam</th>
+                            <th scope="col" class="px-6 py-3">Tanggal Wajib Pengembalian</th>
+                            <th scope="col" class="px-6 py-3">Tanggal Pengembalian</th>
+                            <th scope="col" class="px-6 py-3">Denda</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach ($riwayat_pinjam as $item)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">{{ $loop->iteration }}</td>
+                                <td class="px-6 py-4">{{ $item->buku->judul }}</td>
+                                <td class="px-6 py-4">{{ $item->buku->kode_buku }}</td>
+                                <td class="px-6 py-4">{{ $item->tanggal_pinjam }}</td>
+                                <td class="px-6 py-4">{{ $item->tanggal_wajib_kembali }}</td>
+                                <td class="px-6 py-4">{{ $item->tanggal_pengembalian }}</td>
+                                <td class="px-6 py-4">{{ $item->denda }}</td>
+                                <td class="px-6 py-4">
+                                    @if ($item->status == 'Dipinjam')
+                                        <span
+                                            class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-yellow-500 rounded-lg">
+                                            <i class="fa-solid fa-clock"></i> Dipinjam
+                                        </span>
+                                    @elseif ($item->status == 'Dikembalikan')
+                                        <span
+                                            class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-green-500 rounded-lg">
+                                            <i class="fa-solid fa-check-circle"></i> Dikembalikan
+                                        </span>
+                                    @elseif ($item->status == 'Menunggu Pengambilan')
+                                        <span
+                                            class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-red-500 rounded-lg">
+                                            <i class="fa-solid fa-hourglass-half"></i> Menunggu Pengambilan
+                                        </span>
+                                    @else
+                                        <span
+                                            class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-gray-500 rounded-lg">
+                                            <i class="fa-solid fa-spinner fa-spin"></i> Menunggu Konfirmasi
+                                        </span>
+                                    @endif
+
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-card>
+    @endrole
     @role('admin')
         <div class="my-5 card-container">
             <div class="border-l-4 border-red-500 card">
@@ -104,8 +171,8 @@
                             <th scope="col" class="px-6 py-3">Tanggal Pinjam</th>
                             <th scope="col" class="px-6 py-3">Tanggal Wajib Pengembalian</th>
                             <th scope="col" class="px-6 py-3">Tanggal Pengembalian</th>
-                            <th scope="col" class="px-6 py-3">Status</th>
                             <th scope="col" class="px-6 py-3">Denda</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -118,31 +185,32 @@
                                 <td class="px-6 py-4">{{ $item->tanggal_pinjam }}</td>
                                 <td class="px-6 py-4">{{ $item->tanggal_wajib_kembali }}</td>
                                 <td class="px-6 py-4">{{ $item->tanggal_pengembalian }}</td>
+                                <td class="px-6 py-4">{{ $item->denda }}</td>
                                 <td class="px-6 py-4">
-                                    @if ($item->status == 'dipinjam')
+                                    @if ($item->status == 'Dipinjam')
                                         <span
                                             class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-yellow-500 rounded-lg">
                                             <i class="fa-solid fa-clock"></i> Dipinjam
                                         </span>
-                                    @elseif ($item->status == 'dikembalikan')
+                                    @elseif ($item->status == 'Dikembalikan')
                                         <span
                                             class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-green-500 rounded-lg">
                                             <i class="fa-solid fa-check-circle"></i> Dikembalikan
                                         </span>
-                                    @elseif ($item->status == 'menunggu pengambilan')
+                                    @elseif ($item->status == 'Menunggu Pengambilan')
                                         <span
                                             class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-red-500 rounded-lg">
-                                            <i class="fa-solid fa-exclamation-circle"></i> Terlambat
+                                            <i class="fa-solid fa-hourglass-half"></i> Menunggu Pengambilan
                                         </span>
                                     @else
                                         <span
                                             class="flex items-center gap-1 px-2 py-1 text-xs text-white bg-gray-500 rounded-lg">
-                                            <i class="fa-solid fa-question-circle"></i> Menunggu Konfirmasi
+                                            <i class="fa-solid fa-spinner fa-spin"></i> Menunggu Konfirmasi
                                         </span>
                                     @endif
+
                                 </td>
 
-                                <td class="px-6 py-4">{{ $item->denda }}</td>
                             </tr>
                         @endforeach
                     </tbody>

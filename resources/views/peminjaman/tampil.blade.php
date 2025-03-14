@@ -2,18 +2,36 @@
     <x-header value="{{ __('Riwayat Peminjaman') }}" />
     <x-session-status />
 
-    <a href="javascript:void(0)" onclick="AddPeminjaman()"
-        class="inline-flex items-center px-4 py-2 mb-3 text-white bg-blue-600 rounded hover:bg-blue-700">
-        <i class="fa-solid fa-plus"></i> tambah
-    </a>
+
     @role('admin')
         <div class="">
-            <div class="mb-3">
-                <a href="/cetaklaporan"
-                    class="inline-flex items-center px-4 py-2 mx-2 mb-3 text-white bg-blue-600 rounded hover:bg-blue-700">
-                    <i class="fa-solid fa-print"></i> Cetak
+            <div class="flex gap-4 mb-4">
+                <!-- Tombol Tambah Peminjaman -->
+                <a href="javascript:void(0)" onclick="AddPeminjaman()" x-data="{ show: false }" @mouseover="show = true"
+                    @mouseleave="show = false"
+                    class="relative flex items-center justify-center p-3 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                    <i class="fa-solid fa-plus"></i>
+
+                    <!-- Tooltip -->
+                    <span x-show="show"
+                        class="absolute px-3 py-1 text-xs text-white -translate-x-1/2 bg-gray-800 rounded-md shadow-lg -bottom-10 left-1/2 whitespace-nowrap">
+                        Tambah Peminjaman
+                    </span>
+                </a>
+
+                <!-- Tombol Cetak -->
+                <a href="/cetaklaporan" x-data="{ show: false }" @mouseover="show = true" @mouseleave="show = false"
+                    class="relative flex items-center justify-center p-3 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                    <i class="fa-solid fa-print"></i>
+
+                    <!-- Tooltip -->
+                    <span x-show="show"
+                        class="absolute px-3 py-1 text-xs text-white -translate-x-1/2 bg-gray-800 rounded-md shadow-lg -bottom-10 left-1/2 whitespace-nowrap">
+                        Cetak Laporan
+                    </span>
                 </a>
             </div>
+
             <div class="lg:col-auto h-min">
                 <div class="mb-4 bg-white rounded-lg shadow-md min-h-80">
                     <div class="w-full p-3 overflow-x-auto min-h-80">
@@ -40,28 +58,44 @@
     @endrole
 
     @role('peminjam')
-        <div class="lg:col-auto">
-            <div class="mb-4 bg-white rounded-lg shadow-md">
-                <div class="p-3 overflow-x-auto">
-                    <table class="min-w-full m-2 divide-y divide-gray-200" id="Tablepeminjam" style="font-size: .7rem">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-4 py-2 text-left">No.</th>
-                                <th class="px-4 py-2 text-left">Nama</th>
-                                <th class="px-4 py-2 text-left">Judul Buku</th>
-                                <th class="px-4 py-2 text-left">Kode Buku</th>
-                                <th class="px-4 py-2 text-left">Tanggal Pinjam</th>
-                                <th class="px-4 py-2 text-left">Tanggal Wajib Pengembalian</th>
-                                <th class="px-4 py-2 text-left">Tanggal Pengembalian</th>
-                                <th class="px-4 py-2 text-left">Denda</th>
-                                <th class="px-4 py-2 text-left">Status</th>
+        <div class="">
+            <div class="flex gap-4 mb-4">
+                <!-- Tombol Tambah Peminjaman -->
+                <a href="javascript:void(0)" onclick="AddPeminjaman()" x-data="{ show: false }" @mouseover="show = true"
+                    @mouseleave="show = false"
+                    class="relative flex items-center justify-center p-3 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                    <i class="fa-solid fa-plus"></i>
 
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- Tooltip -->
+                    <span x-show="show"
+                        class="absolute px-3 py-1 text-xs text-white -translate-x-1/2 bg-gray-800 rounded-md shadow-lg -bottom-10 left-1/2 whitespace-nowrap">
+                        Tambah Peminjaman
+                    </span>
+                </a>
+            </div>
+            <div class="lg:col-auto">
+                <div class="mb-4 bg-white rounded-lg shadow-md">
+                    <div class="p-3 overflow-x-auto">
+                        <table class="min-w-full m-2 divide-y divide-gray-200" id="Tablepeminjam" style="font-size: .7rem">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">No.</th>
+                                    <th class="px-4 py-2 text-left">Nama</th>
+                                    <th class="px-4 py-2 text-left">Judul Buku</th>
+                                    <th class="px-4 py-2 text-left">Kode Buku</th>
+                                    <th class="px-4 py-2 text-left">Tanggal Pinjam</th>
+                                    <th class="px-4 py-2 text-left">Tanggal Wajib Pengembalian</th>
+                                    <th class="px-4 py-2 text-left">Tanggal Pengembalian</th>
+                                    <th class="px-4 py-2 text-left">Denda</th>
+                                    <th class="px-4 py-2 text-left">Status</th>
 
-                        </tbody>
-                    </table>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -69,7 +103,7 @@
 
     <div x-data="{ modalPeminjaman: false }" x-init="$store.modal = { modalPeminjaman }">
         <x-slot name="modals">
-            <form id="AddPeminjaman">
+            <form id="AddPeminjaman" aria-autocomplete="off">
                 @csrf
                 <x-modal modal="$store.modal.modalPeminjaman" dialog="modal-modalPeminjaman-dialog">
                     <div class="px-5 bg-white sm:p-7 sm:pb-0">
@@ -101,6 +135,8 @@
                                                 ({{ auth()->user()->email }})</option>
                                         </select>
                                     @endrole
+
+
                                     <x-input-error :messages="$errors->get('users_id')" class="mt-2" />
                                 </div>
 
@@ -110,6 +146,8 @@
                                     <select name="buku_id" id="buku_id"
                                         class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">
                                         <option value="">Pilih Buku</option>
+
+
                                     </select>
                                     <x-input-error :messages="$errors->get('buku_id')" class="mt-2" />
                                 </div>
@@ -342,7 +380,7 @@
                             // Jika sukses, tampilkan SweetAlert
                             Swal.fire({
                                 title: "Berhasil!",
-                                text: "Peminjaman berhasil ditambahkan.",
+                                text: "Peminjaman berhasil diajukan.",
                                 icon: "success",
                                 confirmButtonColor: "#3085d6",
                                 confirmButtonText: "OK",
@@ -398,21 +436,27 @@
                     .then(res => res.json())
                     .then(data => {
                         let buku_id = document.getElementById('buku_id');
-                        buku_id.innerHTML = data.length ?
-                            data.map(item => `<option value="${item.id}" ${item.stock === 0 ? 'disabled' : ''}>
-                    ${item.judul} (${item.kode_buku}) - Stok: ${item.stock} ${item.stock === 0 ? '(HABIS)' : ''}
-                </option>`).join('') :
-                            '<option selected>⚠️ Semua buku habis</option>';
+                        buku_id.innerHTML = `<option value="">Pilih Buku</option>` +
+                            (data.length ? data.map(item => `
+                    <option value="${item.id}" ${item.stock === 0 ? 'disabled' : ''}>
+                        ${item.judul} (${item.kode_buku}) - Stok: ${item.stock} ${item.stock === 0 ? '(HABIS)' : ''}
+                    </option>
+                `).join('') : '<option disabled>⚠️ Semua buku habis</option>');
+
                         buku_id.disabled = data.length === 0;
-                        buku_id.disabled = true;
                     })
                     .catch(() => {
                         buku_id.innerHTML = '<option selected>⚠️ Gagal mengambil data</option>';
                         buku_id.disabled = true;
                     });
             }
-        </script>
 
+            @role('peminjam')
+                document.addEventListener("DOMContentLoaded", function() {
+                    GetBuku();
+                });
+            @endrole
+        </script>
     </x-slot>
 
 

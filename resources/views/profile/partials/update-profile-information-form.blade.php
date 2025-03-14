@@ -22,19 +22,23 @@
             <div class="flex items-center space-x-4">
                 <div class="shrink-0">
                     @isset($user->avatar)
-                        <img class="object-cover w-16 h-16 rounded-full image-preview" src="{{ $user->avatar }}" alt="{{ $user->name }}" />
+                        <img class="object-cover w-16 h-16 rounded-full image-preview" src="{{ $user->avatar }}"
+                            alt="{{ $user->name }}" />
                     @else
-                        <img class="object-cover w-16 h-16 rounded-full image-preview" src="{{ asset('assets/img/profile.webp') }}" alt="{{ $user->name }}" />
+                        <img class="object-cover w-16 h-16 rounded-full image-preview"
+                            src="{{ asset('assets/img/profile.webp') }}" alt="{{ $user->name }}" />
                     @endisset
                 </div>
                 <label class="block">
                     <span class="sr-only">{{ __('Choose File') }}</span>
-                    <input type="file" name="avatar" id="image" accept="image/*" class="block w-full text-sm text-[#697a8d] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-200 file:text-indigo-700 hover:file:bg-indigo-300 focus:outline-none file:transition-all file:!cursor-pointer" onchange="previewImage()" />
+                    <input type="file" name="avatar" id="image" accept="image/*"
+                        class="block w-full text-sm text-[#697a8d] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-200 file:text-indigo-700 hover:file:bg-indigo-300 focus:outline-none file:transition-all file:!cursor-pointer"
+                        onchange="previewImage()" />
                 </label>
             </div>
             <div class="mt-2">
                 @error('avatar')
-                <span class="text-sm text-red-600">{{ $message }}</span>
+                    <span class="text-sm text-red-600">{{ $message }}</span>
                 @enderror
             </div>
         </div>
@@ -51,8 +55,8 @@
             <x-input-label for="email" :text="__('Email')" />
             <x-text-input type="email" name="email" id="email" class="mt-1" :value="old('email', $user->email)" required />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
-            
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+
+            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && !$user->hasVerifiedEmail())
                 <div>
                     <p class="mt-2 text-sm text-gray-800">
                         {{ __('Your email address is unverified.') }}

@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Exports\BukuExport;
 use App\Imports\BukuImport;
 use App\Models\Buku;
+use App\Models\Koleksi;
 use App\Models\Profile;
 use App\Models\Kategori;
 use App\Models\KategoriBuku;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use RealRashid\SweetAlert\Facades\Alert;
@@ -19,14 +21,27 @@ class BukuController extends Controller
 {
     public function index(Request $request)
     {
+        $user = auth()->user();
         $kategori = Kategori::all();
-        $buku = $request->has('search')
-            ? Buku::with(['kategori_buku'])->where('judul', 'like', '%' . $request->search . '%')->orderBy('created_at', 'desc')->paginate(8)
-            : Buku::orderBy('created_at', 'desc')->paginate(8);
 
+        // Ambil daftar buku berdasarkan pencarian jika ada
+        $buku = Buku::with('kategori_buku')
+            ->when($request->has('search'), function ($query) use ($request) {
+                return $query->where('judul', 'like', '%' . $request->search . '%');
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(8);
 
-        return view('buku.tampil', compact('buku', 'kategori'));
+        // Ambil daftar koleksi buku milik user
+        $koleksi = Koleksi::where('users_id', $user->id)
+            ->with('buku')
+            ->get();
+
+        $koleksiBukuIds = $koleksi->pluck('buku_id')->toArray();
+
+        return view('buku.tampil', compact('buku', 'kategori', 'koleksiBukuIds', 'koleksi'));
     }
+
 
     public function create()
     {
@@ -227,5 +242,77 @@ class BukuController extends Controller
             ->addColumn('option', 'buku.dropdown') // Pastikan view ini ada
             ->rawColumns(['gambar', 'judul', 'kode_buku', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi', 'stock', 'option']) // Mengizinkan HTML di kolom ini
             ->make(true);
+    }
+
+    public function koleksiBuku(Request $request)
+    {
+        $user = auth()->user();
+
+        // Ambil koleksi buku user dengan relasi buku dan kategorinya
+        $koleksi = Koleksi::where('users_id', $user->id)
+            ->with('buku.kategori_buku')
+            ->get();
+
+        // Ambil semua kategori
+        $kategori = Kategori::all();
+
+        // Ambil daftar buku berdasarkan pencarian jika ada, dengan pagination
+        $buku = Buku::with('kategori_buku')
+            ->when($request->has('search'), function ($query) use ($request) {
+                return $query->where('judul', 'like', '%' . $request->search . '%');
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(8);
+
+        // Buat daftar ID buku yang ada di koleksi user
+        $koleksiBukuIds = $koleksi->pluck('buku_id')->toArray();
+
+        // Tambahkan properti isInCollection ke setiap buku
+        $buku->getCollection()->transform(function ($b) use ($koleksiBukuIds) {
+            $b->isInCollection = in_array($b->id, $koleksiBukuIds);
+            return $b;
+        });
+
+        return view('buku.koleksi', compact('koleksi', 'buku', 'kategori'));
+    }
+
+
+    public function tambahKoleksi(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'buku_id' => 'required|exists:buku,id',
+        ]);
+
+        $bukuId = $request->buku_id;
+
+        // Cek apakah buku sudah ada di koleksi user
+        $exists = Koleksi::where('users_id', $user->id)
+            ->where('buku_id', $bukuId)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['status' => 'exists', 'message' => 'Buku sudah ada di koleksi Anda.']);
+        }
+
+        // Simpan ke koleksi
+        Koleksi::create([
+            'users_id' => $user->id,
+            'buku_id' => $bukuId
+        ]);
+
+        return response()->json(['status' => 'success']);
+    }
+
+    public function hapusKoleksi($id)
+    {
+        $koleksi = Koleksi::where('id', $id)->where('users_id', Auth::id())->first();
+
+        if ($koleksi) {
+            $koleksi->delete();
+            return response()->json(['status' => 'deleted', 'message' => 'Buku berhasil dihapus dari koleksi']);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'Buku tidak ditemukan di koleksi user']);
     }
 }

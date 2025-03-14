@@ -25,9 +25,8 @@ class UserTemplateExport implements FromArray, WithHeadings, WithColumnWidths, W
             return [$role->id, $role->name];
         })->toArray();
 
-
-
         // Tambahkan 10 baris kosong untuk input user
+        $data = [];
         for ($i = 0; $i < 10; $i++) {
             $data[] = ['', '', '', '', ''];
         }
@@ -36,6 +35,10 @@ class UserTemplateExport implements FromArray, WithHeadings, WithColumnWidths, W
         $data[] = ['', '', '', '', '']; // Spasi antar bagian
         $data[] = ['Keterangan Role ID:', '', '', '', ''];
         $data = array_merge($data, $roles);
+        $data[] = ['Keterangan:', '', '', '', ''];
+        $data[] = ['Password harus berupa kombinasi angka dan huruf.', '', '', '', ''];
+        $data[] = ['Nama hanya berisi huruf.', '', '', '', ''];
+        $data[] = ['Penulisan harus sesuai contoh!', '', '', '', ''];
 
         return $data;
     }
@@ -55,7 +58,6 @@ class UserTemplateExport implements FromArray, WithHeadings, WithColumnWidths, W
     {
         return [
             1 => ['font' => ['bold' => true, 'size' => 11]], // Judul Template ditebalkan & diperbesar
-
         ];
     }
 }
