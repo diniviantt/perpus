@@ -2,15 +2,21 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class BukuExport implements FromCollection, WithHeadings
+class BukuExport implements FromArray, WithHeadings
 {
-    public function collection()
+    public function array(): array
     {
-        // Menyediakan 5 baris kosong sebagai template input
-        return collect(array_fill(0, 5, ['', '', '', '', '', '', '', '']));
+        // Menyediakan beberapa baris kosong untuk diisi
+        return [
+            ['', '', '', '', '', '', '', ''], // Baris kosong untuk data
+            ['', '', '', '', '', '', '', ''], // Baris kosong untuk data
+            ['', '', '', '', '', '', '', ''], // Baris kosong untuk data
+            ['', '', '', '', '', '', '', ''], // Baris kosong untuk data
+            ['* Pastikan nama file gambar di kolom "Gambar" pada template Excel sesuai dengan nama file gambar yang diunggah.'], // Keterangan di bagian bawah
+        ];
     }
 
     public function headings(): array
@@ -19,6 +25,7 @@ class BukuExport implements FromCollection, WithHeadings
             'kode_buku',
             'judul',
             'pengarang',
+            'kategori',
             'penerbit',
             'tahun_terbit',
             'deskripsi',

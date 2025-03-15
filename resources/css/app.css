@@ -195,7 +195,10 @@ div.grid.grid-cols-2.gap-4.mb-4 {
 .dt-length {
     display: flex;
     align-items: center;
-    gap: 10px; /* Jarak antara label dan select */
+    gap: 10px;
+    color: #566a7f;
+    background-color: white;
+    /* Jarak antara label dan select */
 }
 
 .dt-length select {
@@ -205,4 +208,39 @@ div.grid.grid-cols-2.gap-4.mb-4 {
     padding: 4px 10px; /* Padding dalam select */
     border-radius: 5px;
     border: 1px solid #ccc;
+    background-color: white;
 }
+.dt-search input {
+    background-color: white;
+    /* Jarak antara label dan input */
+}
+.dt-paging nav ul.pagination a {
+    background-color: white;
+    color: #566a7f;
+    cursor: pointer;
+}
+.dt-paging nav ul.pagination a.active {
+    background-color: white;
+    color: white;
+}
+.dt-paging nav ul.pagination a:hover {
+    background-color: white;
+}
+.dt-paging nav ul.pagination a.disabled {
+    cursor: not-allowed;
+    color: #ccc;
+}
+.dt-paging nav ul.pagination a.disabled:hover {
+    background-color: white;
+}
+.dt-paging nav ul.pagination a.active:hover {
+    background-color: white;
+}
+.dt-paging nav ul.pagination a.active.disabled {
+    background-color: white;
+}
+.dt-paging nav ul.pagination a.active.disabled:hover {
+    background-color: white;
+}
+
+/* Nonaktifkan dark mode pada DataTables */

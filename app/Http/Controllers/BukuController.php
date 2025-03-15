@@ -22,15 +22,21 @@ class BukuController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $kategori = Kategori::all();
+        $kategori = Kategori::all(); // Ambil semua kategori
 
-        // Ambil daftar buku berdasarkan pencarian jika ada
+        // Ambil semua buku atau filter berdasarkan kategori jika ada
         $buku = Buku::with('kategori_buku')
-            ->when($request->has('search'), function ($query) use ($request) {
-                return $query->where('judul', 'like', '%' . $request->search . '%');
+            ->when($request->kategori, function ($query, $kategoriId) {
+                $query->whereHas('kategori_buku', function ($q) use ($kategoriId) {
+                    $q->where('kategori_id', $kategoriId);
+                });
+            })
+            ->when($request->search, function ($query) {
+                $query->where('judul', 'like', '%' . request('search') . '%');
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(8);
+            ->paginate(6)
+            ->appends(request()->query());
 
         // Ambil daftar koleksi buku milik user
         $koleksi = Koleksi::where('users_id', $user->id)
@@ -43,6 +49,8 @@ class BukuController extends Controller
     }
 
 
+
+
     public function create()
     {
         $kategori = Kategori::all();
@@ -52,46 +60,41 @@ class BukuController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        // Validasi input
+        $validatedData = $request->validate([
             'judul' => 'required',
             'kode_buku' => 'required|unique:buku',
-            'kategori_buku' => 'required',
+            'kategori_buku' => 'required|array',
             'pengarang' => 'required',
             'penerbit' => 'required',
-            'tahun_terbit' => 'required',
+            'tahun_terbit' => 'required|integer',
             'deskripsi' => 'required',
             'gambar' => 'nullable|mimes:jpg,jpeg,png|max:2048',
-            'stock' => 'required',
-        ], [
-            'judul.required' => 'Judul tidak boleh kosong',
-            'kode_buku.required' => 'Kode Buku Tidak Boleh Kosong',
-            'kode_buku.unique' => 'Kode Buku Telah Tersedia',
-            'kategori_buku.required' => 'Harap masukan kategori',
-            'pengarang.required' => 'Pengarang tidak boleh kosong',
-            'penerbit.required' => 'Penerbit tidak boleh kosong',
-            'tahun_terbit.required' => 'Harap isi tahun terbit',
-            'deskripsi.required' => 'Deskripsi tidak boleh kosong',
-            'gambar.mimes' => 'Gambar harus berupa jpg, jpeg, atau png',
-            'gambar.max' => 'Ukuran gambar tidak boleh lebih dari 2 MB',
-            'stock.required' => 'Stock tidak boleh kosong',
+            'stock' => 'required|integer',
         ]);
 
-        $data = $request->only(['judul', 'kode_buku', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi', 'stock']);
+        // Ambil data kecuali kategori_buku
+        $data = $request->except('kategori_buku');
 
+        // Cek apakah ada gambar yang diunggah
         if ($request->hasFile('gambar')) {
             $nama_gambar = time() . '.' . $request->gambar->extension();
             $request->gambar->move(public_path('images'), $nama_gambar);
             $data['gambar'] = $nama_gambar;
         }
 
+        // Simpan data buku
         $buku = Buku::create($data);
 
-        if ($request->has('kategori_buku')) {
+        // Sinkronisasi kategori buku jika tersedia
+        if ($request->has('kategori_buku') && method_exists($buku, 'kategori_buku')) {
             $buku->kategori_buku()->sync($request->kategori_buku);
         }
 
-        Alert::success('Berhasil', 'Berhasil Menambahkan Data Buku');
-        return redirect()->route('buku.index');
+        return response()->json([
+            'success' => true,
+            'message' => 'Buku berhasil ditambahkan!',
+        ]);
     }
 
     public function show($id)
@@ -179,19 +182,14 @@ class BukuController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx',
+            'import' => 'required|mimes:xlsx,xls',
         ]);
 
-        $file = $request->file('file');
-        $nama_file = time() . '.' . $file->extension();
-        $file->move(public_path('import'), $nama_file);
+        // Mengimpor data dari file Excel
+        Excel::import(new BukuImport($request->file('import')->getRealPath()), $request->file('import'));
 
-        Excel::import(new BukuImport, public_path('import/' . $nama_file));
-
-        Alert::success('Berhasil', 'Data Buku Berhasil Diimport');
-        return redirect()->route('buku.index');
+        return redirect()->route('buku.index')->with('success', 'Data buku berhasil diimpor!');
     }
-
     public function listBuku()
     {
         $buku = Buku::all();

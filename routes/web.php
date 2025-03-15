@@ -59,13 +59,13 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
         'update' => 'buku.update',
         'destroy' => 'buku.destroy',
     ]);
-    Route::get('buku-export', [BukuController::class, 'export'])->name('buku-export');
-    Route::post('import-buku', [BukuController::class, 'import'])->name('import-buku');
-    Route::get('list-buku', [BukuController::class, 'listBuku'])->name('list-buku');
-    Route::get('table-buku', [BukuController::class, 'tableBuku'])->name('table-buku');
-
 
     Route::middleware('auth')->group(function () {
+        Route::get('buku-export', [BukuController::class, 'export'])->name('buku-export');
+        Route::post('import-buku', [BukuController::class, 'import'])->name('import-buku');
+        Route::get('list-buku', [BukuController::class, 'listBuku'])->name('list-buku');
+        Route::get('table-buku', [BukuController::class, 'tableBuku'])->name('table-buku');
+
         Route::get('koleksi-buku', [BukuController::class, 'koleksiBuku'])->name('koleksi-buku');
         Route::delete('koleksi-buku/{id}', [BukuController::class, 'hapusKoleksi'])->name('hapus-koleksi');
 

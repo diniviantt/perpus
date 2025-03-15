@@ -18,6 +18,7 @@
         "aos": "^2.3.4",
         "datatables.net": "^2.1.8",
         "datatables.net-dt": "^2.1.8",
+        "lucide": "^0.482.0",
         "sweetalert2": "^11.16.0"
     }
 }
