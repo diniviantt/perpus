@@ -9,9 +9,9 @@
             @if (collect($koleksi)->isEmpty())
                 <p class="text-center text-gray-500">Belum ada buku dalam koleksi.</p>
             @else
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
                     @foreach ($koleksi as $k)
-                        <div id="buku-{{ $k->id }}" class="h-max">
+                        <div id="buku-{{ $k->id }}" class="w-full h-max">
                             <div class="flex overflow-hidden bg-white rounded-lg shadow-md h-72">
                                 {{-- Gambar --}}
                                 <div class="w-1/2 h-full">
@@ -21,7 +21,7 @@
                                 </div>
 
                                 {{-- Keterangan Buku --}}
-                                <div class="flex flex-col justify-between w-full p-4">
+                                <div class="flex flex-col justify-between w-1/2 p-4">
                                     <div>
                                         <h5 class="mb-3 text-lg font-bold leading-tight text-indigo-600">
                                             <a href="{{ route('buku.show', $k->buku->id) }}"

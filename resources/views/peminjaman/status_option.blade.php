@@ -9,10 +9,18 @@
         </svg>
     </button>
 
+
     <!-- Dropdown Menu -->
     <div x-show="open" @click.away="open = false" x-transition
         class="absolute z-[1000] mt-1 bg-white border border-gray-200 rounded-md shadow-xl min-w-32 -left-20">
         <div class="py-1">
+
+            <a href="javascript:void(0)" onclick="updateStatus('batalkan', '{{ $model->id }}')"
+                class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <i class="w-4 h-4 text-red-500 fas fa-times"></i> <!-- Ikon X untuk batalkan -->
+                Batalkan
+            </a>
+
             <!-- Status: Menunggu Pengambilan (Admin konfirmasi peminjaman) -->
             <a href="javascript:void(0)" onclick="updateStatus('konfirmasi', '{{ $model->id }}')"
                 class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">

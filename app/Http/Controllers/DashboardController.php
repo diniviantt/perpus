@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Exports\UserTemplateExport;
 use App\Imports\UserImport;
 use App\Models\Buku;
+use App\Models\Denda;
 use App\Models\Kategori;
+use App\Models\Koleksi;
 use App\Models\ModelHasRole;
 use App\Models\Peminjaman;
 use App\Models\Profile;
@@ -29,8 +31,32 @@ class DashboardController extends Controller
         $kategori = Kategori::count();
         $buku = Buku::count();
         $user = User::role('peminjam')->count();
-        $riwayat_pinjam = Peminjaman::with(['user', 'buku'])->orderBy('updated_at', 'desc')->get();
-        $jumlah_riwayat = Peminjaman::count();
+        $jumlah_riwayat = Peminjaman::where('status', '=', 'Dikembalikan')->count();
+        $total_denda = Denda::where('status', 'Lunas')->sum('nominal');
+
+        $jumlah_dipinjam = Peminjaman::where('users_id', auth()->user()->id)
+            ->where('status', '!=', 'Dikembalikan') // Status selain 'Dikembalikan'
+            ->count();
+
+        $koleksi = Koleksi::where('users_id', auth()->user()->id)
+            ->count();
+
+        $jumlah_peminjaman = Peminjaman::where('users_id', auth()->user()->id)->where('status', 'Dikembalikan')->count();
+
+
+        if (Auth::user()->hasRole('admin')) {
+            $riwayat_pinjam = Peminjaman::with(['user', 'buku'])
+                ->whereNotNull('tanggal_pengembalian') // Filter hanya yang sudah dikembalikan
+                ->orderBy('updated_at', 'desc')
+                ->get();
+        } else {
+            $riwayat_pinjam = Peminjaman::with(['buku'])
+                ->where('users_id', $iduser)
+                ->whereNotNull('tanggal_pengembalian') // Filter hanya yang sudah dikembalikan
+                ->orderBy('updated_at', 'desc')
+                ->get();
+        }
+
         $pinjamanUser = Peminjaman::where('users_id', $iduser)->whereNull('tanggal_pengembalian')->count();
         $masaPinjam = Peminjaman::with('buku')->where('users_id', $iduser)->whereNull('tanggal_pengembalian')->get();
 
@@ -38,19 +64,25 @@ class DashboardController extends Controller
 
         foreach ($masaPinjam as $pinjam) {
             $tanggalPeminjaman = Carbon::parse($pinjam->tanggal_peminjaman);
-            $sisaHari = 7 - $tanggalPeminjaman->diffInDays(Carbon::now());
+            $tanggalPengembalian = Carbon::parse($pinjam->tanggal_wajib_kembali);
 
-            if ($sisaHari > 2) {
-                $notifikasi[] = "📘 Masa peminjaman buku <strong>{$pinjam->buku->judul}</strong> berlangsung selama 7 hari.";
-            } elseif ($sisaHari > 0) {
-                $notifikasi[] = "⚠️ <strong>Peringatan!</strong> Sisa waktu peminjaman buku <strong>{$pinjam->buku->judul}</strong> tinggal $sisaHari hari.";
-            } else {
+            // Menghitung selisih hari antara tanggal peminjaman dan tanggal pengembalian
+            $sisaHari = $tanggalPeminjaman->diffInDays($tanggalPengembalian);
+
+            // Jika sudah lebih dari 0 hari, berarti masa peminjaman sudah habis
+            if ($sisaHari <= 0) {
                 $notifikasi[] = "❗ <strong>Masa peminjaman buku {$pinjam->buku->judul} telah habis.</strong> Segera kembalikan!";
+            } else {
+                $notifikasi[] = "⚠️ <strong>Peringatan!</strong> Sisa waktu peminjaman buku <strong>{$pinjam->buku->judul}</strong> tinggal $sisaHari hari.";
             }
         }
 
-        return view('dashboard.index', compact('kategori', 'buku', 'user', 'riwayat_pinjam', 'jumlah_riwayat', 'notifikasi'));
+        return view('dashboard.index', compact('kategori', 'buku', 'user', 'riwayat_pinjam', 'jumlah_riwayat', 'total_denda', 'notifikasi', 'jumlah_dipinjam', 'koleksi', 'jumlah_peminjaman'));
     }
+
+
+
+
 
 
     public function admin()
@@ -219,5 +251,10 @@ class DashboardController extends Controller
     public function export()
     {
         return Excel::download(new UserTemplateExport, 'user_template.xlsx');
+    }
+
+    public function DataPeminjam()
+    {
+        return view('anggota.data-peminjam');
     }
 }

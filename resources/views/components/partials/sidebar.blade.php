@@ -22,30 +22,39 @@
 
             {{-- <x-partials.sidebar-link icon="fa-regular fa-folder" :text="__('Single Menu')" /> --}}
 
-            <x-partials.sidebar-dropdown icon="fa-regular fa-folder" :text="__('Buku')" :active="Route::is('buku.*') ? 'active' : ''">
-                <x-partials.sidebar-dropdown-item :to="route('buku.index')" :text="__('Lihat Semua Buku')" :active="request()->routeIs('buku.index') ? 'active' : ''" />
-                <x-partials.sidebar-dropdown-item :to="route('koleksi-buku')" :text="__('Lihat Semua Koleksi Buku')" :active="request()->routeIs('koleksi-buku') ? 'active' : ''" />
-                @role('admin')
-                    <x-partials.sidebar-dropdown-item :to="route('list-buku')" :text="__('List Buku')" :active="request()->routeIs('list-buku') ? 'active' : ''" />
-                @endrole
-            </x-partials.sidebar-dropdown>
 
+            @role('peminjam')
+                <x-partials.sidebar-link icon="fa-solid fa-book" :to="route('buku.index')" :text="__('Buku')" :active="request()->routeIs('buku.index') ? 'active' : ''" />
+                <x-partials.sidebar-link icon="fa-solid fa-bookmark" :to="route('koleksi-buku')" :text="__('Koleksi Buku')"
+                    :active="request()->routeIs('koleksi-buku') ? 'active' : ''" />
+                <x-partials.sidebar-link icon="fa-solid fa-book-open-reader" :to="route('peminjaman.index')" :text="__('Peminjaman')"
+                    :active="request()->routeIs('peminjaman.index') ? 'active' : ''" />
+            @endrole
 
-            <x-partials.sidebar-dropdown icon="fa-regular fa-folder" :text="__('Kategori')">
-                <x-partials.sidebar-dropdown-item :to="route('kategori.index')" :text="__('Lihat Semua Kategori')" :active="request()->routeIs('kategori.index') ? 'active' : ''" />
-                <x-partials.sidebar-dropdown-item :to="route('kategori.create')" :text="__('Tambah Kategori')" :active="request()->routeIs('kategori.create') ? 'active' : ''" />
-            </x-partials.sidebar-dropdown>
             @role('admin')
-                <x-partials.sidebar-dropdown icon="fa-regular fa-folder" :text="__('Anggota')">
-                    <x-partials.sidebar-dropdown-item :to="route('anggota.index')" :text="__('Lihat Anggota')" :active="request()->routeIs('anggota.index') ? 'active' : ''" />
-                    <x-partials.sidebar-dropdown-item :to="route('anggota.create')" :text="__('Tambah Anggota')" :active="request()->routeIs('anggota.create') ? 'active' : ''" />
+                <x-partials.sidebar-dropdown icon="fa-solid fa-book" :text="__('Buku')" :active="Route::is('buku.*') ? 'active' : ''">
+                    <x-partials.sidebar-dropdown-item :to="route('buku.index')" :text="__('Lihat Semua Buku')" :active="request()->routeIs('buku.index') ? 'active' : ''" />
+                    <x-partials.sidebar-dropdown-item :to="route('list-buku')" :text="__('Daftar Buku')" :active="request()->routeIs('list-buku') ? 'active' : ''" />
                 </x-partials.sidebar-dropdown>
             @endrole
-            <x-partials.sidebar-dropdown icon="fa-regular fa-folder" :text="__('Peminjaman')">
-                <x-partials.sidebar-dropdown-item :to="route('peminjaman.index')" :text="__('Riwayat Peminjaman')" :active="request()->routeIs('peminjaman.index') ? 'active' : ''" />
-                <x-partials.sidebar-dropdown-item :to="route('peminjaman.create')" :text="__('Tambahkan Peminjaman')" :active="request()->routeIs('peminjaman.create') ? 'active' : ''" />
-                <x-partials.sidebar-dropdown-item :to="route('pengembalian.index')" :text="__('Kembalikan Buku')" :active="request()->routeIs('pengembalian.index') ? 'active' : ''" />
-            </x-partials.sidebar-dropdown>
+
+            @role('petugas')
+                <x-partials.sidebar-link :to="route('data-peminjam')" icon="fa-solid fa-user" :text="__('Peminjam')" :active="request()->routeIs('data-peminjam') ? 'active' : ''" />
+                <x-partials.sidebar-link :to="route('peminjaman.index')" icon="fa-solid fa-book-open-reader" :text="__('Peminjaman')"
+                    :active="request()->routeIs('peminjaman.index') ? 'active' : ''" />
+                <x-partials.sidebar-link :to="route('halaman-riwayat')" icon="fa-solid fa-clipboard" :text="__('Denda')"
+                    :active="request()->routeIs('halaman-riwayat') ? 'active' : ''" />
+            @endrole
+            @role('admin')
+                <x-partials.sidebar-link :to="route('kategori.index')" icon="fa-solid fa-layer-group" :text="__('Kategori')"
+                    :active="request()->routeIs('kategori.index') ? 'active' : ''" />
+                <x-partials.sidebar-link :to="route('anggota.index')" icon="fa-solid fa-list-ul" :text="__('Daftar User')"
+                    :active="request()->routeIs('anggota.index') ? 'active' : ''" />
+                <x-partials.sidebar-link :to="route('peminjaman.index')" icon="fa-solid fa-book-open-reader" :text="__('Peminjaman')"
+                    :active="request()->routeIs('peminjaman.index') ? 'active' : ''" />
+                <x-partials.sidebar-link :to="route('halaman-riwayat')" icon="fa-solid fa-clipboard" :text="__('Denda')"
+                    :active="request()->routeIs('halaman-riwayat') ? 'active' : ''" />
+            @endrole
         </ul>
     </div>
 </aside>

@@ -2,7 +2,6 @@
     <x-header value="{{ __('Detail Buku') }}" />
     <x-session-status />
 
-
     <div class="flex p-6 mb-6 bg-white rounded-lg shadow-lg">
         <div class="flex justify-center w-1/3">
             @if ($buku->gambar != null)
@@ -40,11 +39,25 @@
                 @endforeach
             </div>
 
-            <div class="flex items-center mt-16">
+            <div class="flex items-center justify-between mt-28">
                 <a href="{{ route('buku.index') }}"
                     class="flex items-center px-4 py-2.5 text-white transition duration-200 bg-blue-500 rounded-full hover:bg-blue-600">
                     <i class="text-lg fas fa-arrow-left"></i>
                 </a>
+                @role('peminjam')
+                    @if ($bukuDipinjam)
+                        <button
+                            class="flex items-center px-4 py-2.5 text-white bg-gray-500 rounded-full cursor-not-allowed">
+                            <span>📖 Sedang Anda Dipinjam</span>
+                        </button>
+                    @else
+                        <a href="#" id="pinjamSekarang" data-buku-id="{{ $buku->id }}"
+                            class="flex items-center px-4 py-2.5 text-white transition duration-200 bg-blue-500 rounded-full hover:bg-blue-600">
+                            <span>Pinjam Sekarang!</span>
+                        </a>
+                    @endif
+                @endrole
+
             </div>
         </div>
 
@@ -81,4 +94,58 @@
             }
         </style>
     </x-slot>
+
+
+    <x-slot name="scripts">
+        <script>
+            $(document).ready(function() {
+                $("#pinjamSekarang").on("click", function(e) {
+                    e.preventDefault(); // Hindari reload halaman
+
+                    let bukuId = $(this).data("buku-id"); // Ambil ID buku dari tombol
+                    let userId = "{{ auth()->user()->id }}"; // Ambil ID user yang sedang login
+                    let csrfToken = $('meta[name="csrf-token"]').attr("content");
+
+                    // Kirim permintaan peminjaman via AJAX
+                    $.ajax({
+                        url: "{{ route('peminjaman.store') }}",
+                        type: "POST",
+                        data: {
+                            buku_id: bukuId,
+                            users_id: userId,
+                            _token: csrfToken
+                        },
+                        beforeSend: function() {
+                            $("#pinjamSekarang").text("Memproses...").prop("disabled", true);
+                        },
+                        success: function(response) {
+                            Swal.fire({
+                                title: "Berhasil!",
+                                text: "Peminjaman berhasil diajukan.",
+                                icon: "success",
+                                confirmButtonColor: "#3085d6",
+                                confirmButtonText: "OK",
+                            }).then(() => {
+                                $("#pinjamSekarang").text("Pinjam Sekarang!").prop(
+                                    "disabled", false);
+                                window.location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            $("#pinjamSekarang").text("Pinjam Sekarang!").prop("disabled", false);
+
+                            Swal.fire({
+                                title: "Gagal!",
+                                text: "Terjadi kesalahan, coba lagi nanti.",
+                                icon: "error",
+                                confirmButtonColor: "#d33",
+                                confirmButtonText: "OK",
+                            });
+                        }
+                    });
+                });
+            });
+        </script>
+    </x-slot>
+
 </x-app-layout>

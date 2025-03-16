@@ -34,4 +34,60 @@
             </div>
         </form>
     </div>
+
+
+    <x-slot name = "scripts">
+        <script>
+            function confirmDelete(id) {
+                window.Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.Swal.fire({
+                            title: "Deleting...",
+                            text: "Please wait while we delete the data.",
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: () => {
+                                window.Swal.showLoading();
+                            }
+                        });
+
+                        $.ajax({
+                            type: "DELETE",
+                            url: `${window.location.origin}/dashboard/delete-/${id}`,
+                            headers: {
+                                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                                    "content")
+                            },
+                            success: function(response) {
+                                window.Swal.fire({
+                                    title: "Deleted!",
+                                    text: "Your file has been deleted.",
+                                    icon: "success"
+                                }).then(() => {
+                                    window.location.reload(
+                                        true); // Reload page without cache
+                                });
+                            },
+                            error: function(xhr) {
+                                console.log(xhr.responseText);
+                                window.Swal.fire({
+                                    title: "Error!",
+                                    text: "An error occurred while deleting the record.",
+                                    icon: "error"
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        </script>
+    </x-slot>
 </x-app-layout>

@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('dendas', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('peminjaman_id');
-            $table->foreign('peminjaman_id')->references('id')->on('riwayat_pinjam')->onUpdate('cascade')->onDelete('cascade');
-            $table->integer('nominal');
-            $table->date('tanggal_bayar');
-            $table->enum('status', ['lunas', 'belum lunas']);
-            $table->string('keterangan');
-            $table->timestamps();
+            $table->unsignedBigInteger('peminjaman_id'); // Menyimpan peminjaman_id sebagai foreign key
+            $table->foreign('peminjaman_id')->references('id')->on('riwayat_pinjam')->onUpdate('cascade')->onDelete('cascade'); // Pastikan nama tabel 'peminjaman'
+            $table->integer('nominal')->nullable(); // Nominal denda yang dikenakan
+            $table->timestamp('tanggal_bayar')->nullable(); // Gunakan timestamp untuk menyimpan tanggal dan waktu
+            $table->enum('status', ['Lunas', 'Belum Bayar'])->default('Belum Bayar'); // Status denda
+            $table->string('keterangan')->nullable(); // Keterangan mengenai denda
+            $table->timestamps(); // Timestamp untuk pencatatan pembuatan dan pembaruan
         });
     }
 

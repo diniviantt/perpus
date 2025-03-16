@@ -60,7 +60,41 @@
     @endif
 
 
+
+
     @role('peminjam')
+        <div class="my-5 card-container">
+            <div class="border-l-4 border-red-500 card">
+                <div class="bg-red-500 card-icon">
+                    <i class="fa-solid fa-book"></i>
+                </div>
+                <div>
+                    <p class="text-lg font-bold">{{ $koleksi }}</p>
+                    <p class="text-sm text-gray-600">Koleksi Buku</p>
+                </div>
+            </div>
+
+            <div class="border-l-4 border-blue-500 card">
+                <div class="bg-blue-500 card-icon">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div>
+                    <p class="text-lg font-bold">{{ $jumlah_dipinjam }}</p>
+                    <p class="text-sm text-gray-600">Buku Dipinjam</p>
+                </div>
+            </div>
+
+            <div class="border-l-4 border-blue-500 card">
+                <div class="bg-blue-500 card-icon">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div>
+                    <p class="text-lg font-bold">{{ $jumlah_peminjaman }}</p>
+                    <p class="text-sm text-gray-600">Riwayat Peminjaman</p>
+                </div>
+            </div>
+        </div>
+
         <x-card class="p-6 mt-10 bg-white rounded-lg shadow-md">
             <h1 class="mb-4 text-2xl font-extrabold">Riwayat Peminjaman</h1>
             <div class="p-3 overflow-x-auto">
@@ -118,10 +152,11 @@
             </div>
         </x-card>
     @endrole
+
     @role('admin')
-        <div class="my-5 card-container">
-            <div class="border-l-4 border-red-500 card">
-                <div class="bg-red-500 card-icon">
+        <div class="grid grid-cols-1 gap-4 my-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            <div class="flex items-center p-4 space-x-4 bg-white border-l-4 border-red-500 rounded-lg shadow-md">
+                <div class="p-3 text-white bg-red-500 rounded-full">
                     <i class="fa-solid fa-book"></i>
                 </div>
                 <div>
@@ -129,8 +164,9 @@
                     <p class="text-sm text-gray-600">Jumlah Buku</p>
                 </div>
             </div>
-            <div class="border-l-4 border-yellow-400 card">
-                <div class="bg-yellow-400 card-icon">
+
+            <div class="flex items-center p-4 space-x-4 bg-white border-l-4 border-yellow-400 rounded-lg shadow-md">
+                <div class="p-3 text-white bg-yellow-400 rounded-full">
                     <i class="fa-solid fa-list"></i>
                 </div>
                 <div>
@@ -138,17 +174,19 @@
                     <p class="text-sm text-gray-600">Kategori</p>
                 </div>
             </div>
-            <div class="border-l-4 border-green-500 card">
-                <div class="bg-green-500 card-icon">
+
+            <div class="flex items-center p-4 space-x-4 bg-white border-l-4 border-green-500 rounded-lg shadow-md">
+                <div class="p-3 text-white bg-green-500 rounded-full">
                     <i class="fa-solid fa-user-group"></i>
                 </div>
                 <div>
                     <p class="text-lg font-bold">{{ $user }}</p>
-                    <p class="text-sm text-gray-600">Anggota</p>
+                    <p class="text-sm text-gray-600">Peminjam</p>
                 </div>
             </div>
-            <div class="border-l-4 border-blue-500 card">
-                <div class="bg-blue-500 card-icon">
+
+            <div class="flex items-center p-4 space-x-4 bg-white border-l-4 border-blue-500 rounded-lg shadow-md">
+                <div class="p-3 text-white bg-blue-500 rounded-full">
                     <i class="fa-solid fa-chart-line"></i>
                 </div>
                 <div>
@@ -156,7 +194,18 @@
                     <p class="text-sm text-gray-600">Riwayat Peminjaman</p>
                 </div>
             </div>
+
+            <div class="flex items-center p-4 space-x-4 bg-white border-l-4 border-purple-500 rounded-lg shadow-md">
+                <div class="p-3 text-white bg-purple-500 rounded-full">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div>
+                    <p class="text-lg font-bold">Rp {{ number_format($total_denda, 0, ',', '.') }}</p>
+                    <p class="text-sm text-gray-600">Total Uang Denda</p>
+                </div>
+            </div>
         </div>
+
 
         <x-card class="p-6 bg-white rounded-lg shadow-md">
             <h1 class="mb-4 text-2xl font-extrabold">Riwayat Peminjaman</h1>

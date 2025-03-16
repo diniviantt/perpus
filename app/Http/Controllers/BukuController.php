@@ -9,6 +9,7 @@ use App\Models\Koleksi;
 use App\Models\Profile;
 use App\Models\Kategori;
 use App\Models\KategoriBuku;
+use App\Models\Peminjaman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -35,19 +36,80 @@ class BukuController extends Controller
                 $query->where('judul', 'like', '%' . request('search') . '%');
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(6)
+            ->paginate(9)
             ->appends(request()->query());
 
         // Ambil daftar koleksi buku milik user
-        $koleksi = Koleksi::where('users_id', $user->id)
-            ->with('buku')
-            ->get();
-
+        $koleksi = Koleksi::where('users_id', $user->id)->with('buku')->get();
         $koleksiBukuIds = $koleksi->pluck('buku_id')->toArray();
 
-        return view('buku.tampil', compact('buku', 'kategori', 'koleksiBukuIds', 'koleksi'));
+        $bukuDipinjam = Peminjaman::where('users_id', $user->id)
+            ->whereNull('tanggal_pengembalian') // Hanya buku yang belum dikembalikan
+            ->with('buku') // Mengambil detail buku terkait
+            ->get();
+
+        $bukuDipinjamIds = $bukuDipinjam->pluck('buku_id')->toArray();
+
+
+        return view('buku.tampil', compact('buku', 'kategori', 'koleksiBukuIds', 'koleksi', 'bukuDipinjam'));
     }
 
+    // Cek stok buku berdasarkan ID
+    public function cekStok($id)
+    {
+        $buku = Buku::find($id);
+        if (!$buku) {
+            return response()->json(['success' => false, 'message' => 'Buku tidak ditemukan'], 404);
+        }
+        return response()->json(['stok' => $buku->stock]);
+    }
+
+    // Proses peminjaman buku
+    public function pinjamBuku(Request $request, $id)
+    {
+        $user = auth()->user();
+        $buku = Buku::findOrFail($id);
+
+        // Cek apakah user sudah meminjam buku ini
+        if (Peminjaman::where('users_id', $user->id)
+            ->where('buku_id', $buku->id)
+            ->whereNull('tanggal_pengembalian')
+            ->exists()
+        ) {
+            return response()->json(['success' => false, 'message' => 'Anda sudah meminjam buku ini']);
+        }
+
+        // Cek batas maksimal peminjaman (misal: 3 buku)
+        if (Peminjaman::where('users_id', $user->id)->whereNull('tanggal_pengembalian')->count() >= 3) {
+            return response()->json(['success' => false, 'message' => 'Anda telah mencapai batas peminjaman']);
+        }
+
+        // Cek stok buku
+        if ($buku->stock <= 0) {
+            return response()->json(['success' => false, 'message' => 'Stok habis']);
+        }
+
+        // Gunakan transaksi database
+        DB::beginTransaction();
+        try {
+            // Buat peminjaman
+            $peminjaman = Peminjaman::create([
+                'users_id' => $user->id,
+                'buku_id' => $buku->id,
+                'tanggal_pinjam' => now(),
+                'tanggal_wajib_kembali' => now()->addDays(7),
+            ]);
+
+            // Kurangi stok buku
+            $buku->decrement('stock');
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Berhasil meminjam']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan, silakan coba lagi']);
+        }
+    }
 
 
 
@@ -100,11 +162,16 @@ class BukuController extends Controller
     public function show($id)
     {
         $buku = Buku::findOrFail($id);
+        $bukuDipinjam = Peminjaman::where('users_id', auth()->id())
+            ->where('buku_id', $buku->id)
+            ->whereNull('tanggal_pengembalian') // Belum dikembalikan
+            ->exists();
         $ketBuku = KategoriBuku::with('buku')->where('buku_id', $id)->get();
 
         return view('buku.detail', compact(
             'buku',
-            'ketBuku'
+            'ketBuku',
+            'bukuDipinjam'
         ));
     }
 
@@ -170,8 +237,11 @@ class BukuController extends Controller
 
         $buku->delete();
 
-        Alert::success('Berhasil', 'Buku Berhasil Terhapus');
-        return redirect()->route('buku.index');
+        // Mengirim respons JSON yang memberitahu bahwa penghapusan berhasil
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Buku berhasil terhapus!'
+        ]);
     }
 
     public function export()
@@ -237,7 +307,7 @@ class BukuController extends Controller
             ->addColumn('stock', function ($buku) {
                 return $buku ? $buku->stock : 'N/A';
             })
-            ->addColumn('option', 'buku.dropdown') // Pastikan view ini ada
+            ->addColumn('option', 'buku.dropdown-buku') // Pastikan view ini ada
             ->rawColumns(['gambar', 'judul', 'kode_buku', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi', 'stock', 'option']) // Mengizinkan HTML di kolom ini
             ->make(true);
     }

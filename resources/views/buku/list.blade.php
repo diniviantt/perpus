@@ -1,9 +1,11 @@
 <x-app-layout title="{{ __('List Buku') }}">
-    <x-header value="{{ __('List Buku') }}" />
+    {{-- <x-header value="{{ __('List Buku') }}" /> --}}
     <x-session-status />
 
 
-    <div class="flex p-6 mb-6 bg-white rounded-lg shadow-lg">
+    <div class="p-6 mb-6 bg-white rounded-lg shadow-lg ">
+        <h2 class="mb-3 text-lg font-semibold">{{ __('List Buku') }}</h2>
+
         <table id="ListBuku" class="w-full">
 
         </table>

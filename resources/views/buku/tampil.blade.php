@@ -1,9 +1,12 @@
 <x-app-layout title="{{ __('Daftar Buku') }}">
-    <x-header value="{{ __('Daftar Buku') }}" />
+    {{-- <x-header value="{{ __('Daftar Buku') }}" /> --}}
     <x-session-status />
     @php
         // Ambil ID buku yang ada di koleksi pengguna
         $koleksiIds = $buku->pluck('buku_id')->toArray();
+
+        $bukuDipinjamIds = $bukuDipinjam->pluck('buku_id')->toArray();
+
     @endphp
     @role('admin')
         <div class="flex gap-4 mb-3">
@@ -145,11 +148,23 @@
                                         <i data-lucide="trash" class="w-4 h-4"></i>
                                     </button>
                                 @else
-                                    <a href="{{ route('buku.show', $item->id) }}"
-                                        class="flex items-center justify-center w-8 h-8 text-white transition bg-blue-500 rounded hover:bg-blue-600"
-                                        aria-label="Pinjam Buku" title="Pinjam Buku">
-                                        <i data-lucide="book-open" class="w-4 h-4"></i>
-                                    </a>
+                                    @if (in_array($item->id, $bukuDipinjamIds))
+                                        {{-- Jika buku sedang dipinjam, tampilkan ikon disabled --}}
+                                        <button
+                                            class="flex items-center justify-center w-8 h-8 text-gray-500 bg-gray-300 rounded cursor-not-allowed"
+                                            title="Buku sedang dipinjam">
+                                            <i class="w-4 h-4" data-lucide="book-open-check"></i>
+                                        </button>
+                                    @else
+                                        {{-- Jika buku bisa dipinjam, tampilkan tombol interaktif --}}
+                                        <button id="pinjamSekarang-{{ $item->id }}" data-buku-id="{{ $item->id }}"
+                                            class="flex items-center justify-center w-8 h-8 text-white bg-blue-500 rounded hover:bg-blue-700"
+                                            title="Pinjam Buku">
+                                            <i class="w-4 h-4" data-lucide="book-open"></i>
+                                        </button>
+                                    @endif
+
+
 
                                     @if (!in_array($item->id, $koleksiBukuIds))
                                         <button id="btn-tambah-koleksi" onclick="tambahKoleksi({{ $item->id }})"
@@ -193,9 +208,8 @@
 
     <x-slot name="scripts">
         <script>
-            $(document).ready(function() {
-                lucide.createIcons();
-            });
+            lucide.createIcons();
+
 
             $('#multiselect').select2({
                 allowClear: true,
@@ -264,17 +278,27 @@
                                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
                             },
                             success: function(response) {
-                                window.Swal.fire({
-                                    title: "Deleted!",
-                                    text: "Your file has been deleted.",
-                                    icon: "success"
-                                }).then(() => {
-                                    window.location.reload(true); // Reload page without cache
-                                });
+                                if (response.status === 'success') {
+                                    window.Swal.fire({
+                                        title: "Deleted!",
+                                        text: response.message, // Pesan yang dikirimkan oleh server
+                                        icon: "success",
+                                        showConfirmButton: true,
+                                        confirmButtonText: "OK"
+                                    }).then(() => {
+                                        // Setelah klik OK, refresh halaman
+                                        location.reload(); // Refresh halaman setelah klik OK
+                                    });
+                                } else {
+                                    window.Swal.fire({
+                                        title: "Error!",
+                                        text: "Terjadi kesalahan saat menghapus data.",
+                                        icon: "error"
+                                    });
+                                }
                             },
-                            error: function(xhr) {
+                            error: function(xhr, status, error) {
                                 console.log("Error:", xhr.responseText); // Debug error di console
-
                                 let errorMessage = "Terjadi kesalahan saat menghapus data.";
                                 if (xhr.responseJSON && xhr.responseJSON.message) {
                                     errorMessage = xhr.responseJSON.message;
@@ -293,6 +317,8 @@
                     }
                 });
             }
+
+
 
 
             function tambahKoleksi(id) {
@@ -497,6 +523,64 @@
                 // Event saat modal tertutup, reset form
                 $('#modalBuku').on('hidden.bs.modal', function() {
                     $('#modalBuku')[0].reset(); // Reset form setelah modal ditutup
+                });
+            });
+
+
+            $(document).ready(function() {
+                $("[id^=pinjamSekarang-]").on("click", function(e) {
+                    e.preventDefault();
+
+                    let bukuId = $(this).data("buku-id");
+                    let buttonEl = $(this);
+
+                    // Cek stok buku sebelum meminjam
+                    $.get(`/dashboard/cek-stok/${bukuId}`, function(data) {
+                        if (data.stok > 0) {
+                            // Jika stok tersedia, lakukan peminjaman
+                            $.ajax({
+                                url: `/dashboard/pinjam-buku/${bukuId}`,
+                                type: "POST",
+                                headers: {
+                                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                                },
+                                data: {
+                                    buku_id: bukuId
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: "success",
+                                            title: "Berhasil!",
+                                            text: "Buku berhasil dipinjam!",
+                                        }).then(() => {
+                                            location
+                                                .reload(); // Reload halaman setelah peminjaman berhasil
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: "error",
+                                            title: "Gagal!",
+                                            text: response.message,
+                                        });
+                                    }
+                                },
+                                error: function() {
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: "Terjadi Kesalahan!",
+                                        text: "Coba lagi nanti.",
+                                    });
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: "warning",
+                                title: "Stok Habis!",
+                                text: "Buku ini sedang tidak tersedia.",
+                            });
+                        }
+                    });
                 });
             });
         </script>

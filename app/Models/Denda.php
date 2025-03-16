@@ -11,4 +11,9 @@ class Denda extends Model
 
     protected $table = 'dendas';
     protected $fillable = ['peminjaman_id', 'nominal', 'tanggal_bayar', 'status', 'keterangan'];
+
+    public function peminjaman()
+    {
+        return $this->belongsTo(Peminjaman::class, 'peminjaman_id', 'id');
+    }
 }

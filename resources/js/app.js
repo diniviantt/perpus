@@ -4,9 +4,7 @@ import Aos from "aos";
 import Alpine from "alpinejs";
 import { createIcons, icons } from "lucide";
 
-document.addEventListener("DOMContentLoaded", function () {
-    createIcons();
-});
+lucide.createIcons();
 
 Alpine.store("modal", {
     testing: false,

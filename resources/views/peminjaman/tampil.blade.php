@@ -1,5 +1,5 @@
 <x-app-layout title="{{ __('Riwayat Peminjaman') }}">
-    <x-header value="{{ __('Riwayat Peminjaman') }}" />
+    {{-- <x-header value="{{ __('Riwayat Peminjaman') }}" /> --}}
     <x-session-status />
 
 
@@ -19,21 +19,24 @@
                     </span>
                 </a>
 
-                <!-- Tombol Cetak -->
-                <a href="/cetaklaporan" x-data="{ show: false }" @mouseover="show = true" @mouseleave="show = false"
-                    class="relative flex items-center justify-center p-3 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                <a href="#" x-data="{ show: false }" @mouseover="show = true" @mouseleave="show = false"
+                    id="printReport" onclick="printReport()"
+                    class="relative flex items-center justify-center p-3 text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:ring-2 focus:ring-green-400 focus:outline-none">
                     <i class="fa-solid fa-print"></i>
 
                     <!-- Tooltip -->
                     <span x-show="show"
                         class="absolute px-3 py-1 text-xs text-white -translate-x-1/2 bg-gray-800 rounded-md shadow-lg -bottom-10 left-1/2 whitespace-nowrap">
-                        Cetak Laporan
+                        Cetak Laporan Peminjaman
                     </span>
                 </a>
             </div>
 
             <div class="lg:col-auto h-min">
                 <div class="mb-4 bg-white rounded-lg shadow-md min-h-80">
+                    <div class="px-4 py-3 border-b">
+                        <h2 class="text-lg font-semibold">{{ __('Peminjaman') }}</h2>
+                    </div>
                     <div class="w-full p-3 overflow-x-auto min-h-80">
                         <table id="Tablepeminjaman" class="table table-striped">
                             <thead>
@@ -54,27 +57,41 @@
                     </div>
                 </div>
             </div>
+
+            <div class="lg:col-auto h-min">
+                <div class="mb-4 bg-white rounded-lg shadow-md min-h-80">
+                    <div class="px-4 py-3 border-b">
+                        <h2 class="text-lg font-semibold">{{ __('Riwayat Peminjaman') }}</h2>
+                    </div>
+                    <div class="w-full p-3 overflow-x-auto min-h-80">
+                        <table id="TableRiwayatpeminjaman" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama</th>
+                                    <th>Judul Buku</th>
+                                    <th>Kode Buku</th>
+                                    <th>Tanggal Pinjam</th>
+                                    <th>Tanggal Wajib Kembali</th>
+                                    <th>Tanggal Pengembalian</th>
+                                    <th>Denda</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     @endrole
 
     @role('peminjam')
         <div class="">
-            <div class="flex gap-4 mb-4">
-                <!-- Tombol Tambah Peminjaman -->
-                <a href="javascript:void(0)" onclick="AddPeminjaman()" x-data="{ show: false }" @mouseover="show = true"
-                    @mouseleave="show = false"
-                    class="relative flex items-center justify-center p-3 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none">
-                    <i class="fa-solid fa-plus"></i>
-
-                    <!-- Tooltip -->
-                    <span x-show="show"
-                        class="absolute px-3 py-1 text-xs text-white -translate-x-1/2 bg-gray-800 rounded-md shadow-lg -bottom-10 left-1/2 whitespace-nowrap">
-                        Tambah Peminjaman
-                    </span>
-                </a>
-            </div>
             <div class="lg:col-auto">
                 <div class="mb-4 bg-white rounded-lg shadow-md">
+                    <div class="px-4 py-3 border-b">
+                        <h2 class="text-lg font-semibold">{{ __('Daftar Peminjaman') }}</h2>
+                    </div>
                     <div class="p-3 overflow-x-auto">
                         <table class="min-w-full m-2 divide-y divide-gray-200" id="Tablepeminjam" style="font-size: .7rem">
                             <thead class="bg-gray-100">
@@ -235,10 +252,63 @@
             });
 
             $(document).ready(function() {
+                $('#TableRiwayatpeminjaman').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    ajax: "{{ route('table-riwayat') }}",
+                    columns: [{
+                            data: 'DT_RowIndex',
+                            name: 'DT_RowIndex',
+                            orderable: false,
+                            searchable: false
+                        },
+                        {
+                            data: 'nama',
+                            name: 'user.name'
+                        },
+                        {
+                            data: 'judul_buku',
+                            name: 'buku.judul'
+                        },
+                        {
+                            data: 'kode_buku',
+                            name: 'buku.kode_buku'
+                        },
+                        {
+                            data: 'tanggal_pinjam',
+                            name: 'tanggal_pinjam'
+                        },
+                        {
+                            data: 'tanggal_wajib_kembali',
+                            name: 'tanggal_wajib_kembali'
+                        },
+                        {
+                            data: 'tanggal_pengembalian',
+                            name: 'tanggal_pengembalian'
+                        },
+                        {
+                            data: 'denda',
+                            name: 'denda'
+                        },
+                        {
+                            data: 'status',
+                            name: 'status',
+                            orderable: false,
+                            searchable: false
+                        },
+                    ],
+                    columnDefs: [{
+                        targets: [0, 8],
+                        className: "text-center"
+                    }, ],
+                });
+            });
+
+            $(document).ready(function() {
                 $('#Tablepeminjam').DataTable({
                     processing: true,
                     serverSide: true,
-                    ajax: "{{ route('table-peminjaman') }}",
+                    ajax: "{{ route('table-peminjam') }}",
                     columns: [{
                             data: 'DT_RowIndex',
                             name: 'DT_RowIndex',
@@ -304,6 +374,10 @@
                     url = `/dashboard/pinjam/${id}/kembalikan`;
                     message = 'Tandai buku sebagai telah dikembalikan?';
                     confirmText = 'Ya, Dikembalikan!';
+                } else if (action === 'batalkan') { // Aksi batalkan menggunakan DELETE
+                    url = `/dashboard/pinjam/${id}/batalkan`;
+                    message = 'Batalkan peminjaman ini dan hapus riwayat?';
+                    confirmText = 'Ya, Batalkan!';
                 }
 
                 Swal.fire({
@@ -318,11 +392,63 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         fetch(url, {
-                                method: "PUT",
+                                method: action === 'batalkan' ? "DELETE" : "PUT", // Menentukan method sesuai aksi
                                 headers: {
                                     "Content-Type": "application/json",
                                     "X-CSRF-TOKEN": "{{ csrf_token() }}"
                                 },
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.message ===
+                                    'Peminjaman tidak dapat dibatalkan jika sudah dikonfirmasi') {
+                                    Swal.fire({
+                                        title: "Gagal!",
+                                        text: data.message,
+                                        icon: "error",
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: "Berhasil!",
+                                        text: data.message,
+                                        icon: "success",
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    });
+                                    setTimeout(() => location.reload(), 2000);
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error:", error);
+                                Swal.fire({
+                                    title: "Gagal!",
+                                    text: "Terjadi kesalahan, coba lagi.",
+                                    icon: "error",
+                                });
+                            });
+                    }
+                });
+            }
+
+
+            function batalkanPeminjaman(id) {
+                Swal.fire({
+                    title: "Apakah Anda yakin?",
+                    text: "Batalkan peminjaman ini dan hapus riwayat?",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Ya, Batalkan!",
+                    cancelButtonText: "Batal"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/dashboard/pinjam/${id}/batalkan`, {
+                                method: "DELETE",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                                }
                             })
                             .then(response => response.json())
                             .then(data => {
@@ -346,6 +472,8 @@
                     }
                 });
             }
+
+
 
             function AddPeminjaman() {
                 console.log('Add Peminjaman');
@@ -456,6 +584,107 @@
                     GetBuku();
                 });
             @endrole
+
+            function printReport() {
+                $.ajax({
+                    url: "/dashboard/laporan-peminjaman", // Menggunakan route utama
+                    method: "GET",
+                    dataType: "json",
+                    success: function(dataPeminjaman) {
+                        // Membuat elemen HTML untuk laporan
+                        let laporan = `
+                <html>
+                <head>
+                    <title>Laporan Peminjaman Buku</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 20px;
+                            padding: 0;
+                            color: #333;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        .header h1 {
+                            margin: 0;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                        }
+                        th, td {
+                            border: 1px solid #000;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        th {
+                            background-color: #f2f2f2;
+                        }
+                        .footer {
+                            margin-top: 20px;
+                            text-align: center;
+                        }
+                        .footer p {
+                            margin: 5px 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Laporan Peminjaman Buku</h1>
+                    </div>
+                    <table>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama</th>
+                            <th>Judul Buku</th>
+                            <th>Kode Buku</th>
+                            <th>Tanggal Pinjam</th>
+                            <th>Tanggal Wajib Kembali</th>
+                            <th>Tanggal Pengembalian</th>
+                            <th>Denda</th>
+                            <th>Status</th>
+                        </tr>`;
+
+                        $.each(dataPeminjaman, function(index, item) {
+                            laporan += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.user.name}</td>
+                        <td>${item.buku.judul}</td>
+                        <td>${item.buku.kode_buku}</td>
+                        <td>${item.tanggal_pinjam}</td>
+                        <td>${item.tanggal_wajib_kembali}</td>
+                        <td>${item.tanggal_pengembalian || '-'}</td>
+                        <td>${item.denda}</td>
+                        <td>${item.status}</td>
+                    </tr>`;
+                        });
+
+                        laporan += `
+                    </table>
+                    <div class="footer">
+                        <p>Dicetak pada: ${new Date().toLocaleString()}</p>
+                        <p>Terima kasih!</p>
+                    </div>
+                </body>
+                </html>`;
+
+                        // Membuka laporan dalam jendela baru untuk dicetak
+                        const win = window.open('', '', 'width=800,height=600');
+                        win.document.write(laporan);
+                        win.document.close();
+                        win.print();
+                    },
+                    error: function(error) {
+                        console.error("Error fetching data:", error);
+                        alert("Gagal mengambil data peminjaman.");
+                    }
+                });
+            }
         </script>
     </x-slot>
 

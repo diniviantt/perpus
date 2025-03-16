@@ -7,7 +7,9 @@ use App\Models\Kategori;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\Facades\DataTables;
 
 class KategoriController extends Controller
 {
@@ -27,28 +29,47 @@ class KategoriController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(
-            [
-                'nama' => 'required|min:2',
-            ],
-            [
-                'nama.required' => "Masukkan nama kategori",
-                'nama.min' => "Minimal 2 karakter"
-            ]
-        );
+        $request->validate([
+            'nama' => 'required|min:2',
+        ], [
+            'nama.required' => "Masukkan nama kategori",
+            'nama.min' => "Minimal 2 karakter"
+        ]);
 
-        $kategori = Kategori::create($request->all());
+        try {
+            $kategori = Kategori::create($request->all());
 
-        Alert::success('Berhasil', 'Berhasil Menambahkan Kategori');
-        return redirect()->route('kategori.index');
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori berhasil ditambahkan!',
+                'data' => $kategori
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan kategori!',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
+
 
 
     public function show($id)
     {
         $kategori = Kategori::find($id);
-        $buku = Buku::all();
-        return view('kategori.detail', ['kategori' => $kategori, 'buku' => $buku]);
+
+        if (!$kategori) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kategori tidak ditemukan!'
+            ], 404);
+        }
+
+        return response()->json([
+            'nama' => $kategori->nama,
+            'deskripsi' => $kategori->deskripsi
+        ]);
     }
 
 
@@ -60,35 +81,83 @@ class KategoriController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate(
-            [
-                'nama' => 'required|min:2',
-            ],
-            [
-                'nama.required' => "Masukkan nama kategori",
-                'nama.min' => "Minimal 2 karakter"
-            ]
-        );
+        Log::info('Request update kategori:', $request->all());
 
-        $kategori = new Kategori;
+        // Validasi request
+        $request->validate([
+            'nama' => 'required|min:2',
+        ], [
+            'nama.required' => "Masukkan nama kategori",
+            'nama.min' => "Minimal 2 karakter"
+        ]);
+
         $kategori = Kategori::find($id);
 
-        $kategori->nama = $request->nama;
-        $kategori->deskripsi = $request->deskripsi;
+        if (!$kategori) {
+            Log::error('Kategori tidak ditemukan: ' . $id);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kategori tidak ditemukan!'
+            ], 404);
+        }
 
-        $kategori->save();
+        try {
+            $kategori->nama = $request->nama;
+            $kategori->deskripsi = $request->deskripsi ?? $kategori->deskripsi;
+            $kategori->save();
 
-        Alert::success('Berhasil', 'Update Success');
-        return redirect()->route('kategori.index');
+            Log::info('Kategori berhasil diperbarui:', ['id' => $id, 'nama' => $kategori->nama]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Kategori berhasil diperbarui!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating kategori: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat memperbarui kategori!'
+            ], 500);
+        }
     }
+
+
+
 
     public function destroy($id)
     {
-        $kategori = Kategori::find($id);
+        try {
+            $kategori = Kategori::findOrFail($id);
+            $kategori->delete();
 
-        $kategori->delete();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Kategori berhasil dihapus!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menghapus data!'
+            ], 500);
+        }
+    }
 
-        Alert::success('Berhasil', 'Berhasil Menghapus Kategori');
-        return redirect()->route('kategori.index');
+
+
+    public function TabelKategori()
+    {
+        $kategori = Kategori::select(['id', 'nama', 'deskripsi']);
+
+        return DataTables::of($kategori)
+            ->addIndexColumn()
+            ->addColumn('nama', function ($kategori) {
+                return $kategori->nama ?? '-';
+            })
+            ->addColumn('deskripsi', function ($kategori) {
+                return $kategori->deskripsi ?? '-';
+            })
+            ->addColumn('option', 'kategori.dropdown-kategori')
+            ->rawColumns(['name', 'deskripsi', 'option']) // Memastikan HTML bisa dirender dengan benar
+            ->make(true);
     }
 }
