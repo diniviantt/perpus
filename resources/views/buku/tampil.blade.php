@@ -45,16 +45,19 @@
 
 
     <form class="mt-5 mb-10" action="{{ route('buku.index') }}" method="GET">
-        <div class="flex w-full ">
+        <div class="flex w-full">
             <input type="search" name="search"
-                class="flex-1 p-2 bg-gray-200 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                class="flex-1 p-3 transition duration-200 bg-white border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="Cari Judul Buku" aria-label="Search" value="{{ request('search') }}" />
-            <button class="p-2 text-white transition duration-200 bg-indigo-600 hover:bg-indigo-800 rounded-r-md"
-                type="submit">
+            <button
+                class="flex items-center justify-center w-12 h-12 ml-2 text-white transition duration-200 transform bg-indigo-600 rounded-full shadow-md hover:bg-indigo-700 hover:scale-105"
+                type="submit" aria-label="Search">
                 <i class="fas fa-search fa-sm"></i>
             </button>
         </div>
     </form>
+
+
 
     <div class="flex flex-col items-center justify-center mb-8 text-center">
         <h1 class="mb-2 text-4xl font-extrabold text-gray-700">📖 Temukan Buku Favorit Anda</h1>
@@ -80,9 +83,6 @@
             </div>
         </div>
     </div>
-
-
-
 
     <div class="container px-1 mb-3"> <!-- Ganti -mx-6 dengan px-6 -->
         <div class="grid justify-center grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
@@ -203,6 +203,41 @@
     <div class="mx-2 my-5">
         {{ $buku->links('vendor.pagination.tailwind') }}
     </div>
+
+    <!-- Buku Terpopuler -->
+    <div class="bg-white">
+        <h2 class="mb-4 text-2xl font-bold text-gray-700 ">🔥 Buku Terpopuler</h2>
+        <div class="grid grid-cols-1 gap-6 mb-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            @if ($bukuTerpopuler->isNotEmpty())
+                <h2 class="text-2xl font-bold text-gray-700">📚 Buku Terpopuler</h2>
+                <div class="grid grid-cols-1 gap-6 mt-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
+                    @foreach ($bukuTerpopuler as $buku)
+                        <div class="w-full bg-white rounded-lg shadow-md">
+                            <img class="object-cover w-full h-48 rounded-t-lg"
+                                src="{{ asset('/images/' . ($buku->gambar ?? 'noImage.jpg')) }}"
+                                alt="{{ $buku->judul }}">
+                            <div class="p-4">
+                                <h5 class="text-lg font-bold text-indigo-600">
+                                    <a href="{{ route('buku.show', $buku->id) }}" class="hover:underline">
+                                        {{ $buku->judul }}
+                                    </a>
+                                </h5>
+                                <p class="text-sm text-gray-600">Pengarang: <span
+                                        class="text-indigo-500">{{ $buku->pengarang }}</span></p>
+                                <p class="text-sm text-gray-600">Kode Buku: {{ $buku->kode_buku }}</p>
+                                <p class="mt-2 text-xs text-gray-500">📖 Dipinjam: {{ $buku->peminjaman->count() }}
+                                    kali</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="mt-4 text-gray-600">Belum ada buku terpopuler.</p>
+            @endif
+
+        </div>
+    </div>
+
 
 
 

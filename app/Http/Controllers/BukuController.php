@@ -10,6 +10,7 @@ use App\Models\Profile;
 use App\Models\Kategori;
 use App\Models\KategoriBuku;
 use App\Models\Peminjaman;
+use App\Models\Ulasan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,7 @@ class BukuController extends Controller
         $koleksi = Koleksi::where('users_id', $user->id)->with('buku')->get();
         $koleksiBukuIds = $koleksi->pluck('buku_id')->toArray();
 
+        // Ambil daftar buku yang sedang dipinjam oleh user
         $bukuDipinjam = Peminjaman::where('users_id', $user->id)
             ->whereNull('tanggal_pengembalian') // Hanya buku yang belum dikembalikan
             ->with('buku') // Mengambil detail buku terkait
@@ -50,9 +52,22 @@ class BukuController extends Controller
 
         $bukuDipinjamIds = $bukuDipinjam->pluck('buku_id')->toArray();
 
+        // Ambil buku yang paling banyak dipinjam
+        $bukuTerpopuler = Peminjaman::select('buku_id', DB::raw('COUNT(buku_id) as total_peminjaman'))
+            ->where('status', 'Dikembalikan') // Hanya menghitung peminjaman yang sudah dikembalikan
+            ->groupBy('buku_id')
+            ->orderByDesc('total_peminjaman')
+            ->with('buku') // Pastikan relasi ke model Buku ada
+            ->take(6) // Ambil 6 buku paling banyak dipinjam
+            ->get()
+            ->map(function ($item) {
+                return $item->buku; // Ambil data buku
+            });
 
-        return view('buku.tampil', compact('buku', 'kategori', 'koleksiBukuIds', 'koleksi', 'bukuDipinjam'));
+
+        return view('buku.tampil', compact('buku', 'kategori', 'koleksiBukuIds', 'koleksi', 'bukuDipinjam', 'bukuTerpopuler'));
     }
+
 
     // Cek stok buku berdasarkan ID
     public function cekStok($id)
@@ -129,7 +144,7 @@ class BukuController extends Controller
             'kategori_buku' => 'required|array',
             'pengarang' => 'required',
             'penerbit' => 'required',
-            'tahun_terbit' => 'required|integer',
+            'tahun_terbit' => 'required|integer|min:1900|max:' . date('Y'), // Validasi tahun tidak melebihi tahun sekarang
             'deskripsi' => 'required',
             'gambar' => 'nullable|mimes:jpg,jpeg,png|max:2048',
             'stock' => 'required|integer',
@@ -159,6 +174,7 @@ class BukuController extends Controller
         ]);
     }
 
+
     public function show($id)
     {
         $buku = Buku::findOrFail($id);
@@ -167,11 +183,14 @@ class BukuController extends Controller
             ->whereNull('tanggal_pengembalian') // Belum dikembalikan
             ->exists();
         $ketBuku = KategoriBuku::with('buku')->where('buku_id', $id)->get();
+        $reviews = Ulasan::with('buku', 'user')->where('buku_id', $id)->latest()->get();
+
 
         return view('buku.detail', compact(
             'buku',
             'ketBuku',
-            'bukuDipinjam'
+            'bukuDipinjam',
+            'reviews'
         ));
     }
 
@@ -191,22 +210,25 @@ class BukuController extends Controller
             'judul' => 'required',
             'pengarang' => 'required',
             'penerbit' => 'required',
-            'tahun_terbit' => 'required',
+            'tahun_terbit' => 'required|integer|min:1900|max:' . date('Y'), // Validasi tahun tidak melebihi tahun sekarang
             'deskripsi' => 'required',
             'gambar' => 'nullable|mimes:jpg,jpeg,png|max:2048',
-            'stock' => 'required',
+            'stock' => 'required|integer',
         ], [
             'judul.required' => 'Judul tidak boleh kosong',
             'pengarang.required' => 'Pengarang tidak boleh kosong',
             'penerbit.required' => 'Penerbit tidak boleh kosong',
             'tahun_terbit.required' => 'Harap isi tahun terbit',
+            'tahun_terbit.integer' => 'Tahun terbit harus berupa angka',
+            'tahun_terbit.min' => 'Tahun terbit tidak boleh kurang dari 1900',
+            'tahun_terbit.max' => 'Tahun terbit tidak boleh lebih dari tahun saat ini',
             'deskripsi.required' => 'Deskripsi tidak boleh kosong',
             'gambar.mimes' => 'Gambar harus berupa jpg, jpeg, atau png',
             'gambar.max' => 'Ukuran gambar tidak boleh lebih dari 2 MB',
             'stock.required' => 'Stock tidak boleh kosong',
-
         ]);
 
+        // Hapus gambar lama jika ada gambar baru diunggah
         if ($request->hasFile('gambar')) {
             if ($buku->gambar) {
                 File::delete(public_path('images/' . $buku->gambar));
@@ -217,8 +239,10 @@ class BukuController extends Controller
             $buku->gambar = $nama_gambar;
         }
 
+        // Update data buku
         $buku->update($request->only(['judul', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi', 'stock']));
 
+        // Sinkronisasi kategori buku jika tersedia
         if ($request->has('kategori_buku')) {
             $buku->kategori_buku()->sync($request->kategori_buku);
         }
@@ -226,6 +250,7 @@ class BukuController extends Controller
         Alert::success('Berhasil', 'Update Berhasil');
         return redirect()->route('buku.index');
     }
+
 
     public function destroy($id)
     {

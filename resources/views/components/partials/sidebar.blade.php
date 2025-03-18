@@ -32,10 +32,7 @@
             @endrole
 
             @role('admin')
-                <x-partials.sidebar-dropdown icon="fa-solid fa-book" :text="__('Buku')" :active="Route::is('buku.*') ? 'active' : ''">
-                    <x-partials.sidebar-dropdown-item :to="route('buku.index')" :text="__('Lihat Semua Buku')" :active="request()->routeIs('buku.index') ? 'active' : ''" />
-                    <x-partials.sidebar-dropdown-item :to="route('list-buku')" :text="__('Daftar Buku')" :active="request()->routeIs('list-buku') ? 'active' : ''" />
-                </x-partials.sidebar-dropdown>
+                <x-partials.sidebar-link icon="fa-solid fa-book" :to="route('buku.index')" :text="__('Buku')" :active="request()->routeIs('buku.index') ? 'active' : ''" />
             @endrole
 
             @role('petugas')

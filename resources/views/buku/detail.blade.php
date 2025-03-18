@@ -63,13 +63,73 @@
 
     </div>
 
-    <x-slot name="scripts">
-        <script>
-            $('#multiselect').select2({
-                allowClear: true,
-            });
-        </script>
-    </x-slot>
+    <div class="w-full p-6 mx-auto bg-white border border-gray-200 shadow-md rounded-xl">
+        {{-- Header Section --}}
+        <h2 class="mb-4 text-lg font-semibold text-gray-800">
+            Ulasan Pengguna ({{ $reviews->count() }})
+        </h2>
+
+        {{-- Daftar Ulasan --}}
+        <div class="space-y-4 overflow-y-auto max-h-72">
+            @forelse ($reviews as $review)
+                <div class="relative p-5 border border-gray-200 rounded-lg shadow-sm bg-gray-50 review-item"
+                    data-id="{{ $review->id }}">
+                    {{-- Header Ulasan --}}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            {{-- Foto Profil --}}
+                            <img src="{{ $review->user->avatar ? asset('storage/' . $review->user->avatar) : asset('assets/img/profile.webp') }}"
+                                alt="User Profile" class="w-10 h-10 border border-gray-300 rounded-full shadow-sm">
+
+                            <div class="ml-4">
+                                <p class="text-sm font-semibold text-gray-900">{{ $review->user->email }}</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ \Carbon\Carbon::parse($review->created_at)->format('d M Y') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Tombol Hapus (hanya jika user yang login adalah pemilik ulasan) --}}
+                        @if (auth()->id() === $review->users_id)
+                            <button type="button" class="text-gray-600 hover:text-gray-900 hapus-ulasan"
+                                data-id="{{ $review->id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        @endif
+                    </div>
+
+                    {{-- Isi Ulasan --}}
+                    <p class="mt-2 text-sm leading-relaxed text-gray-700">
+                        {{ $review->ulasan }}
+                    </p>
+                </div>
+            @empty
+                <p class="text-sm text-gray-500">Belum ada ulasan.</p>
+            @endforelse
+        </div>
+
+        {{-- Form Tambah Ulasan --}}
+        <div class="mt-6">
+            <h3 class="mb-3 text-sm font-semibold text-gray-800">Tulis Ulasan Anda</h3>
+
+            <form action="{{ route('ulasan-buku') }}" method="POST">
+                @csrf
+                <input type="hidden" name="buku_id" value="{{ $buku->id }}">
+
+                {{-- Input Ulasan --}}
+                <textarea name="ulasan" class="w-full p-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Bagikan pengalaman Anda tentang buku ini..." maxlength="500"></textarea>
+
+                {{-- Tombol Kirim --}}
+                <button type="submit"
+                    class="flex items-center gap-2 px-5 py-2 mt-4 text-sm font-semibold text-gray-700 transition bg-white border border-gray-300 rounded-full ring-gray-300 hover:bg-gray-100">
+                    <i class="fas fa-paper-plane"></i>
+                    Kirim Ulasan
+                </button>
+            </form>
+        </div>
+    </div>
+
     <x-slot name="styles">
         <style>
             .text-container {
@@ -92,12 +152,108 @@
                 margin-top: 0.5rem;
                 /* Jarak atas untuk paragraf */
             }
+
+            .custom-toast {
+                width: 320px !important;
+                /* Lebih panjang */
+                height: 45px !important;
+                /* Lebih tipis */
+                font-size: 13px;
+                text-align: center;
+                padding: 8px !important;
+                border-radius: 6px !important;
+                background: rgba(46, 204, 113, 0.7) !important;
+                /* Hijau dengan opacity 70% */
+                color: white !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            /* Perkecil ikon SweetAlert */
+            .custom-toast .swal2-icon {
+                width: 20px !important;
+                height: 20px !important;
+                min-width: 20px !important;
+                min-height: 20px !important;
+            }
+
+            /* Perkecil padding dalam alert */
+            .custom-toast .swal2-title {
+                font-size: 12px !important;
+                padding: 5px 10px !important;
+            }
         </style>
     </x-slot>
 
 
     <x-slot name="scripts">
         <script>
+            $('#multiselect').select2({
+                allowClear: true,
+            });
+            document.addEventListener("DOMContentLoaded", function() {
+                document.querySelectorAll(".hapus-ulasan").forEach(button => {
+                    button.addEventListener("click", function() {
+                        let reviewId = this.getAttribute("data-id");
+
+                        fetch(`/dashboard/ulasan-hapus/${reviewId}`, {
+                                method: "DELETE",
+                                headers: {
+                                    "X-CSRF-TOKEN": document.querySelector(
+                                        'meta[name="csrf-token"]').getAttribute("content"),
+                                    "Accept": "application/json",
+                                    "Content-Type": "application/json"
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    this.closest(".review-item").remove();
+                                    Swal.fire({
+                                        toast: true,
+                                        position: "bottom-end", // Pojok kanan bawah
+                                        icon: "success",
+                                        title: "Ulasan berhasil dihapus!",
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        timerProgressBar: true,
+                                        customClass: {
+                                            popup: 'custom-toast' // Gunakan class custom
+                                        },
+                                        didOpen: (toast) => {
+                                            toast.style.animation =
+                                            "none"; // Hapus animasi getar
+                                        }
+                                    });
+
+                                } else {
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: "Gagal!",
+                                        text: data.message,
+                                        toast: true,
+                                        position: "bottom-end",
+                                        showConfirmButton: false,
+                                        timer: 3000
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                Swal.fire({
+                                    icon: "error",
+                                    title: "Oops!",
+                                    text: "Terjadi kesalahan, coba lagi.",
+                                    toast: true,
+                                    position: "bottom-end",
+                                    showConfirmButton: false,
+                                    timer: 3000
+                                });
+                            });
+                    });
+                });
+            });
+
+
             $(document).ready(function() {
                 $("#pinjamSekarang").on("click", function(e) {
                     e.preventDefault(); // Hindari reload halaman

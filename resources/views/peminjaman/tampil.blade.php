@@ -86,6 +86,48 @@
     @endrole
 
     @role('peminjam')
+
+        @if (!empty($notifikasi))
+            <!-- Header Pemberitahuan -->
+            <div class="w-full p-4 mb-4 bg-white border border-gray-300 rounded-lg shadow-md">
+                <div class="flex items-center gap-2">
+                    <div class="text-xl animate-bounce">🔔</div>
+                    <h2 class="text-2xl font-bold t">Pemberitahuan</h2>
+                </div>
+                <hr class="mt-2 border-gray-300">
+
+                <!-- Bubble Chat Notifikasi -->
+                <div class="flex flex-col w-full gap-3 mt-3">
+                    @foreach ($notifikasi as $notif)
+                        @php
+                            // Menentukan warna latar belakang & panah
+                            if (str_contains($notif['pesan'], '❗')) {
+                                $bgColor = 'bg-red-100';
+                                $arrowColor = 'border-r-red-100';
+                            } elseif (str_contains($notif['pesan'], '⏳') || str_contains($notif['pesan'], '⚠️')) {
+                                $bgColor = 'bg-yellow-100';
+                                $arrowColor = 'border-r-yellow-100';
+                            } else {
+                                $bgColor = 'bg-green-100';
+                                $arrowColor = 'border-r-green-100';
+                            }
+                        @endphp
+
+                        <div class="relative flex flex-col items-start p-3 shadow-md rounded-xl {{ $bgColor }}">
+                            <div
+                                class="absolute -left-2 -top-1 w-0 h-0 border-t-[14px] border-t-transparent border-r-[18px] {{ $arrowColor }} border-b-[14px] border-b-transparent rotate-[26deg]">
+                            </div>
+
+                            <!-- Pesan Notifikasi -->
+                            <p class="text-sm text-gray-800">{!! $notif['pesan'] !!}</p>
+
+
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <div class="">
             <div class="lg:col-auto">
                 <div class="mb-4 bg-white rounded-lg shadow-md">
@@ -118,7 +160,31 @@
         </div>
     @endrole
 
-    <div x-data="{ modalPeminjaman: false }" x-init="$store.modal = { modalPeminjaman }">
+
+    {{-- <!-- Modal Perpanjangan -->
+    <div id="modalPerpanjangan"
+        class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="w-1/3 p-6 bg-white rounded-lg shadow-lg">
+            <h2 class="mb-4 text-lg font-semibold">Perpanjang Peminjaman</h2>
+            <p class="mb-2">Silakan pilih durasi perpanjangan:</p>
+
+            <input type="hidden" id="peminjamanId">
+
+            <select id="durasiPerpanjangan" class="w-full p-2 border rounded">
+                <option value="3">3 Hari</option>
+                <option value="7" selected>7 Hari</option>
+                <option value="14">14 Hari</option>
+            </select>
+
+            <div class="flex justify-end mt-4">
+                <button onclick="tutupModal()" class="px-4 py-2 mr-2 bg-gray-300 rounded">Batal</button>
+                <button onclick="kirimPerpanjangan()"
+                    class="px-4 py-2 text-white bg-green-500 rounded">Perpanjang</button>
+            </div>
+        </div>
+    </div> --}}
+
+    <div x-data="{ modalPeminjaman: false, modalPerpanjangan: false }" x-init="$store.modal = { modalPeminjaman: modalPeminjaman, modalPerpanjangan: modalPerpanjangan }">
         <x-slot name="modals">
             <form id="AddPeminjaman" aria-autocomplete="off">
                 @csrf
@@ -186,6 +252,55 @@
                     </div>
                 </x-modal>
             </form>
+
+
+            <form id="PerpanjanganPeminjaman" aria-autocomplete="off">
+                @csrf
+                <x-modal modal="$store.modal.modalPerpanjangan" dialog="modal-modalPerpanjangan-dialog">
+                    <div class="px-5 bg-white sm:p-7 sm:pb-0">
+                        <div class="mt-5 sm:mt-0">
+                            <x-modal-title :label="__('Perpanjang Peminjaman')" />
+                            <div class="my-2 space-y-3">
+
+                                <!-- Input Hidden untuk ID Peminjaman -->
+                                <input type="hidden" name="peminjaman_id" id="peminjamanId">
+
+                                <!-- Durasi Perpanjangan -->
+                                <div>
+                                    <x-input-label for="durasiPerpanjangan" :text="__('Silakan pilih durasi perpanjangan')" />
+                                    <select name="durasiPerpanjangan" id="durasiPerpanjangan"
+                                        class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">
+                                        <option value="">Pilih Durasi Perpanjangan</option>
+                                        <option value="1">1 Hari</option>
+                                        <option value="2">2 Hari</option>
+                                        <option value="3">3 Hari</option>
+                                        <option value="4">4 Hari</option>
+                                        <option value="5">5 Hari</option>
+                                        <option value="6">6 Hari</option>
+                                        <option value="7">7 Hari</option>
+                                    </select>
+                                    <x-input-error :messages="$errors->get('durasiPerpanjangan')" class="mt-2" />
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Aksi -->
+                    <div class="px-4 py-4 sm:flex sm:flex-row-reverse">
+                        <x-modal-button x-on:click="$store.modal.modalPerpanjangan = false" type="button"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-indigo-500 rounded-lg hover:bg-indigo-600">
+                            {{ __('Batal') }}
+                        </x-modal-button>
+                        <x-modal-button type="submit"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-indigo-600 rounded-lg hover:bg-indigo-700">
+                            {{ __('Perpanjang') }}
+                        </x-modal-button>
+
+                    </div>
+                </x-modal>
+            </form>
+
         </x-slot>
     </div>
 
@@ -685,6 +800,108 @@
                     }
                 });
             }
+
+            // Buat fungsi global agar bisa dipanggil di tombol
+            window.bukaModalPerpanjangan = function(id) {
+                if (!id) {
+                    alert("ID peminjaman tidak valid.");
+                    return;
+                }
+
+                // Setel ID peminjaman ke input hidden dalam form modal
+                $("#peminjamanId").val(id);
+
+                // Tampilkan modal
+                $('#modal-modalPerpanjangan-dialog').removeClass("invisible").addClass("visible");
+
+                // Gunakan Alpine.js jika ada
+                try {
+                    window.Alpine.store('modal', {
+                        modalPerpanjangan: true
+                    });
+                } catch (error) {
+                    console.error("Gagal menampilkan modal perpanjangan:", error);
+                }
+            };
+
+
+            $(document).ready(function() {
+                // Event listener untuk menangani submit form
+                $("#PerpanjanganPeminjaman").on("submit", function(e) {
+                    e.preventDefault(); // Mencegah submit default
+
+                    // Ambil data dari form
+                    let peminjamanId = $("#peminjamanId").val(); // Ambil ID peminjaman
+                    let durasiPerpanjangan = $("#durasiPerpanjangan").val(); // Ambil durasi perpanjangan
+
+                    if (!peminjamanId) {
+                        Swal.fire({
+                            icon: "error",
+                            title: "ID peminjaman tidak valid!",
+                            text: "Harap pilih peminjaman yang benar sebelum memperpanjang.",
+                            width: "400px",
+                            confirmButtonColor: "#4F46E5"
+                        });
+                        return;
+                    }
+
+                    if (!durasiPerpanjangan) {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Durasi perpanjangan belum dipilih!",
+                            text: "Harap pilih durasi perpanjangan.",
+                            width: "400px",
+                            confirmButtonColor: "#4F46E5"
+                        });
+                        return;
+                    }
+
+                    // Kirim data ke server melalui AJAX
+                    $.ajax({
+                        url: '/dashboard/pinjam/perpanjang/' +
+                        peminjamanId, // Ganti dengan URL yang sesuai
+                        type: 'POST',
+                        data: {
+                            _token: $('meta[name="csrf-token"]').attr('content'),
+                            durasi: durasiPerpanjangan
+                        },
+                        success: function(response) {
+                            // Jika peminjaman sudah diperpanjang, beri notifikasi
+                            if (response.already_extended) {
+                                Swal.fire({
+                                    icon: "info",
+                                    title: "Peminjaman Sudah Diperpanjang!",
+                                    text: "Peminjaman buku ini sudah diperpanjang sebelumnya.",
+                                    width: "450px",
+                                    confirmButtonColor: "#4F46E5"
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: response.success ? "success" : "error",
+                                    title: response.success ? "Perpanjangan Berhasil!" :
+                                        "Gagal Memperpanjang",
+                                    text: response.message,
+                                    width: "450px",
+                                    confirmButtonColor: "#4F46E5"
+                                }).then(() => {
+                                    if (response.success) {
+                                        location.reload(); // Refresh halaman setelah sukses
+                                    }
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Terjadi Kesalahan!",
+                                text: "Gagal memperpanjang peminjaman. Silakan coba lagi.",
+                                width: "450px",
+                                confirmButtonColor: "#4F46E5"
+                            });
+                        }
+                    });
+                });
+            });
         </script>
     </x-slot>
 

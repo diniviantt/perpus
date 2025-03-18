@@ -13,6 +13,7 @@ Alpine.store("modal", {
     modalUpload: false,
     modalPeminjaman: false,
     modalBuku: false,
+    modalPerpanjangan: false,
 });
 
 window.Alpine = Alpine;

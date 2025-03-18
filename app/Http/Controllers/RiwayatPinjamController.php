@@ -22,7 +22,55 @@ class RiwayatPinjamController extends Controller
         $iduser = Auth::id();
         $peminjam = User::role('peminjam')->orderBy('updated_at', 'desc')->get();
         $pinjamanUser = Peminjaman::where('users_id', $iduser)->get();
-        return view('peminjaman.tampil', ['peminjam' => $peminjam, 'pinjamanUser' => $pinjamanUser]);
+
+        $masaPinjam = Peminjaman::with('buku')
+            ->where('users_id', $iduser)
+            ->where('status', 'Dipinjam') // Pastikan statusnya benar
+            ->whereNull('tanggal_pengembalian') // Pastikan belum dikembalikan
+            ->get();
+
+        $notifikasi = [];
+
+        foreach ($masaPinjam as $pinjam) {
+            $judulBuku = $pinjam->buku->judul;
+            $tanggalPengembalian = Carbon::parse($pinjam->tanggal_wajib_kembali)->endOfDay();
+            $sisaHari = now()->diffInDays($tanggalPengembalian, false);
+
+            $hariTerlambat = now()->endOfDay()->diffInDays($tanggalPengembalian, false);
+
+            if ($hariTerlambat < 0) {
+                $notifikasi[] = [
+                    'pesan' => "❗ Masa peminjaman buku <u>{$judulBuku}</u> telah habis. <strong>Segera kembalikan!</strong>",
+
+                ];
+            } elseif ($hariTerlambat == 1) {
+                $notifikasi[] = [
+                    'pesan' => "⏳ Waktu peminjaman buku <strong>{$judulBuku}</strong> tinggal 
+                                <span class='font-bold text-red-600'>1 hari lagi</span>! Perpanjang?
+                                <a href='" . route('peminjaman.index') . "' class='text-blue-500 hover:underline'>Ya</a>",
+
+                ];
+            } elseif ($hariTerlambat == 2) {
+                $notifikasi[] = [
+                    'pesan' => "⚠️ Peminjaman buku <strong>{$judulBuku}</strong> tinggal 2 hari lagi!",
+
+                ];
+            } else {
+                $notifikasi[] = [
+                    'pesan' => "📚 Peminjaman buku <strong>{$judulBuku}</strong> masih berlangsung selama 
+                                <span class='font-bold'>{$hariTerlambat} hari</span>.",
+
+                ];
+            }
+        }
+
+
+        return view('peminjaman.tampil', [
+            'peminjam' => $peminjam,
+            'pinjamanUser' => $pinjamanUser,
+            'masaPinjam' => $masaPinjam,
+            'notifikasi' => $notifikasi,
+        ]);
     }
 
 
@@ -271,29 +319,50 @@ class RiwayatPinjamController extends Controller
                         ],
                     ];
 
-                    // Menentukan status saat ini
                     $currentStatus = $statuses[$row->status] ?? $statuses['Menunggu Konfirmasi'];
 
-                    // Tombol batalkan hanya untuk status 'Menunggu Konfirmasi'
-                    $batalkanButton = '';
-                    if ($row->status === 'Menunggu Konfirmasi') {
-                        $batalkanButton = '
-                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full cursor-pointer hover:bg-red-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2" onclick="batalkanPeminjaman(' . $row->id . ')" title="Batalkan Peminjaman dan Hapus Riwayat">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M18 6L6 18"></path>
-                                    <path d="M6 6l12 12"></path>
-                                </svg>
-                            </span>
-                        ';
+                    // Cek apakah peminjaman sudah diperpanjang sebelumnya
+                    $pernahDiperpanjang = $row->pernah_diperpanjang; // Kolom ini harus ditambahkan ke database
+
+                    // Hitung sisa hari sebelum jatuh tempo
+                    $today = \Carbon\Carbon::today();
+                    $dueDate = \Carbon\Carbon::parse($row->tanggal_wajib_kembali)->endOfDay();
+                    $daysLeft = $today->diffInDays($dueDate, false);
+
+
+
+                    // Menentukan apakah tombol perpanjang akan ditampilkan atau tidak
+                    $perpanjangButton = '';
+                    if ($row->status === 'Dipinjam' && $daysLeft === 1 && $pernahDiperpanjang !== 1) {
+                        $perpanjangButton = '
+    <button id="perpanjangBtn_' . $row->id . '" onclick="bukaModalPerpanjangan(' . $row->id . ')" class="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full cursor-pointer hover:bg-green-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        title="Perpanjang Peminjaman"> 
+        Perpanjang
+    </button>';
                     }
 
-                    // Menggabungkan badge status dan tombol batalkan
+
+
+                    $batalkanButton = '';
+                    if (in_array($row->status, ['Menunggu Konfirmasi', 'proses'])) {
+                        $batalkanButton = '
+                            <button class="p-1 text-red-700 bg-red-100 rounded-full hover:bg-red-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                onclick="batalkanPeminjaman(' . $row->id . ')" title="Batalkan Peminjaman">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>';
+                    }
+
+
                     return '
                         <div class="flex items-center space-x-2">
                             <span id="badge-' . $row->id . '" class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ring-1 ' . $currentStatus['ring'] . ' ' . $currentStatus['bg'] . ' ' . $currentStatus['text'] . ' whitespace-nowrap">
                                 ' . $currentStatus['icon'] . '
                                 ' . $currentStatus['label'] . '
                             </span>
+                            ' . $perpanjangButton . '
                             ' . $batalkanButton . '
                         </div>
                     ';
@@ -354,14 +423,16 @@ class RiwayatPinjamController extends Controller
             $buku = $pinjam->buku;  // Ambil data buku terkait peminjaman
             $buku->increment('stock');  // Tambah stok buku karena buku dikembalikan
 
-            // Masukkan data denda ke dalam tabel denda
-            Denda::create([
-                'peminjaman_id' => $pinjam->id,  // Relasi ke peminjaman
-                'nominal' => $denda,             // Nominal denda yang dihitung
-                'tanggal_bayar' => null,         // Denda belum dibayar
-                'status' => 'Belum Bayar',       // Status denda "Belum Lunas"
-                'keterangan' => 'Denda keterlambatan pengembalian buku', // Keterangan denda
-            ]);
+            // Validasi: Buat data denda hanya jika denda tidak null atau lebih dari 0
+            if (!is_null($denda) && $denda > 0) {
+                Denda::create([
+                    'peminjaman_id' => $pinjam->id,  // Relasi ke peminjaman
+                    'nominal' => $denda,             // Nominal denda yang dihitung
+                    'tanggal_bayar' => null,         // Denda belum dibayar
+                    'status' => 'Belum Bayar',       // Status denda "Belum Lunas"
+                    'keterangan' => 'Terlambat mengembalikan buku', // Keterangan denda
+                ]);
+            }
 
             DB::commit();
 
@@ -419,7 +490,7 @@ class RiwayatPinjamController extends Controller
 
     public function riwayatPembayaranDenda()
     {
-        $denda = Denda::with('peminjaman.user') // Menyertakan relasi dengan peminjaman dan user
+        $denda = Denda::with(['peminjaman.user', 'peminjaman.buku']) // Menyertakan relasi dengan peminjaman, user, dan buku
             ->select('id', 'peminjaman_id', 'nominal', 'tanggal_bayar', 'status', 'keterangan')
             ->get();
 
@@ -433,9 +504,11 @@ class RiwayatPinjamController extends Controller
                     ? \Carbon\Carbon::parse($row->tanggal_bayar)->format('d-m-Y | H:i')
                     : '-';
             })
-
             ->addColumn('user', function ($row) {
                 return $row->peminjaman->user->name ?? '-';
+            })
+            ->addColumn('buku', function ($row) {
+                return $row->peminjaman->buku->judul ?? '-'; // Menampilkan nama buku
             })
             ->addColumn('status', function ($row) {
                 $status = $row->status == 'Lunas'
@@ -445,10 +518,8 @@ class RiwayatPinjamController extends Controller
                     : '<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-lg">
                           <i class="fas fa-times-circle"></i> Belum Bayar
                        </span>';
-
                 return $status;
             })
-
             ->addColumn('action', function ($row) {
                 if ($row->status != 'Lunas') {
                     return '<button onclick="konfirmasiBayarDenda(' . $row->id . ')" 
@@ -458,10 +529,10 @@ class RiwayatPinjamController extends Controller
                 }
                 return '-';
             })
-
             ->rawColumns(['status', 'action']) // Pastikan kolom status dan action dirender sebagai HTML
             ->make(true);
     }
+
 
 
     public function PembayaranDenda()
@@ -483,5 +554,32 @@ class RiwayatPinjamController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+    public function perpanjang(Request $request, $id)
+    {
+        $peminjaman = Peminjaman::findOrFail($id);
+
+        // Pastikan peminjaman masih aktif dan belum diperpanjang sebelumnya
+        if ($peminjaman->status !== 'Dipinjam' || $peminjaman->pernah_diperpanjang) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Perpanjangan tidak dapat dilakukan.',
+                'already_extended' => $peminjaman->pernah_diperpanjang // Tanda bahwa sudah diperpanjang
+            ]);
+        }
+
+        // Tambahkan waktu sesuai pilihan pengguna
+        $durasi = (int) $request->durasi;
+        $peminjaman->tanggal_wajib_kembali = Carbon::parse($peminjaman->tanggal_wajib_kembali)->addDays($durasi);
+
+        // Tandai bahwa peminjaman sudah pernah diperpanjang
+        $peminjaman->pernah_diperpanjang = true;
+        $peminjaman->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Peminjaman diperpanjang hingga ' . $peminjaman->tanggal_wajib_kembali->format('d-m-Y'),
+            'already_extended' => false // Belum diperpanjang
+        ]);
     }
 }

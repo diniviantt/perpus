@@ -35,50 +35,84 @@ class DashboardController extends Controller
         $total_denda = Denda::where('status', 'Lunas')->sum('nominal');
 
         $jumlah_dipinjam = Peminjaman::where('users_id', auth()->user()->id)
-            ->where('status', '!=', 'Dikembalikan') // Status selain 'Dikembalikan'
+            ->where('status', '!=', 'Dikembalikan')
             ->count();
 
         $koleksi = Koleksi::where('users_id', auth()->user()->id)
             ->count();
 
-        $jumlah_peminjaman = Peminjaman::where('users_id', auth()->user()->id)->where('status', 'Dikembalikan')->count();
-
+        $jumlah_peminjaman = Peminjaman::where('users_id', auth()->user()->id)
+            ->where('status', 'Dikembalikan')
+            ->count();
 
         if (Auth::user()->hasRole('admin')) {
             $riwayat_pinjam = Peminjaman::with(['user', 'buku'])
-                ->whereNotNull('tanggal_pengembalian') // Filter hanya yang sudah dikembalikan
+                ->whereNotNull('tanggal_pengembalian')
                 ->orderBy('updated_at', 'desc')
                 ->get();
         } else {
             $riwayat_pinjam = Peminjaman::with(['buku'])
                 ->where('users_id', $iduser)
-                ->whereNotNull('tanggal_pengembalian') // Filter hanya yang sudah dikembalikan
+                ->whereNotNull('tanggal_pengembalian')
                 ->orderBy('updated_at', 'desc')
                 ->get();
         }
 
-        $pinjamanUser = Peminjaman::where('users_id', $iduser)->whereNull('tanggal_pengembalian')->count();
-        $masaPinjam = Peminjaman::with('buku')->where('users_id', $iduser)->whereNull('tanggal_pengembalian')->get();
+        $masaPinjam = Peminjaman::with('buku')
+            ->where('users_id', $iduser)
+            ->where('status', 'Dipinjam') // Pastikan statusnya benar
+            ->whereNull('tanggal_pengembalian') // Pastikan belum dikembalikan
+            ->get();
 
         $notifikasi = [];
 
         foreach ($masaPinjam as $pinjam) {
-            $tanggalPeminjaman = Carbon::parse($pinjam->tanggal_peminjaman);
-            $tanggalPengembalian = Carbon::parse($pinjam->tanggal_wajib_kembali);
+            $judulBuku = $pinjam->buku->judul;
+            $tanggalPengembalian = Carbon::parse($pinjam->tanggal_wajib_kembali)->endOfDay();
+            $sisaHari = now()->diffInDays($tanggalPengembalian, false);
 
-            // Menghitung selisih hari antara tanggal peminjaman dan tanggal pengembalian
-            $sisaHari = $tanggalPeminjaman->diffInDays($tanggalPengembalian);
+            $hariTerlambat = now()->endOfDay()->diffInDays($tanggalPengembalian, false);
 
-            // Jika sudah lebih dari 0 hari, berarti masa peminjaman sudah habis
-            if ($sisaHari <= 0) {
-                $notifikasi[] = "❗ <strong>Masa peminjaman buku {$pinjam->buku->judul} telah habis.</strong> Segera kembalikan!";
+            if ($hariTerlambat < 0) {
+                $notifikasi[] = [
+                    'pesan' => "❗ Masa peminjaman buku <u>{$judulBuku}</u> telah habis. <strong>Segera kembalikan!</strong>",
+
+                ];
+            } elseif ($hariTerlambat == 1) {
+                $notifikasi[] = [
+                    'pesan' => "⏳ Waktu peminjaman buku <strong>{$judulBuku}</strong> tinggal 
+                                <span class='font-bold text-red-600'>1 hari lagi</span>! Perpanjang?
+                                <a href='" . route('peminjaman.index') . "' class='text-blue-500 hover:underline'>Ya</a>",
+
+                ];
+            } elseif ($hariTerlambat == 2) {
+                $notifikasi[] = [
+                    'pesan' => "⚠️ Peminjaman buku <strong>{$judulBuku}</strong> tinggal 2 hari lagi!",
+
+                ];
             } else {
-                $notifikasi[] = "⚠️ <strong>Peringatan!</strong> Sisa waktu peminjaman buku <strong>{$pinjam->buku->judul}</strong> tinggal $sisaHari hari.";
+                $notifikasi[] = [
+                    'pesan' => "📚 Peminjaman buku <strong>{$judulBuku}</strong> masih berlangsung selama 
+                                <span class='font-bold'>{$hariTerlambat} hari</span>.",
+
+                ];
             }
         }
 
-        return view('dashboard.index', compact('kategori', 'buku', 'user', 'riwayat_pinjam', 'jumlah_riwayat', 'total_denda', 'notifikasi', 'jumlah_dipinjam', 'koleksi', 'jumlah_peminjaman'));
+        return view('dashboard.index', compact(
+            'kategori',
+            'buku',
+            'user',
+            'riwayat_pinjam',
+            'jumlah_riwayat',
+            'total_denda',
+            'notifikasi',
+            'jumlah_dipinjam',
+            'koleksi',
+            'jumlah_peminjaman'
+        ));
     }
+
 
 
 

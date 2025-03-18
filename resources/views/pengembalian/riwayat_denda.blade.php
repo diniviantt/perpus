@@ -10,6 +10,7 @@
                         <tr>
                             <th>No</th>
                             <th>Nama</th>
+                            <th>Buku</th>
                             <th>Nominal</th>
                             <th>Tanggal Bayar</th>
                             <th>Status</th>
@@ -39,6 +40,10 @@
                         {
                             data: 'user',
                             name: 'user'
+                        },
+                        {
+                            data: 'buku',
+                            name: 'buku'
                         },
                         {
                             data: 'nominal',

@@ -10,6 +10,7 @@ use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\PengembalianController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RiwayatPinjamController;
+use App\Http\Controllers\UlasanController;
 use App\Models\Buku;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -107,32 +108,35 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
     ]);
 
 
-    Route::get('/table-peminjaman', [RiwayatPinjamController::class, 'tablePeminjaman'])->name('table-peminjaman');
-    Route::get('/table-peminjam', [RiwayatPinjamController::class, 'tablePeminjam'])->name('table-peminjam');
-    Route::get('/table-riwayat', [RiwayatPinjamController::class, 'tableRiwayatPeminjaman'])->name('table-riwayat');
-    Route::get('/laporan-peminjaman', [RiwayatPinjamController::class, 'laporanPeminjaman'])->name('laporan.peminjaman');
-    Route::get('/cek-stok/{id}', [BukuController::class, 'cekStok']);
-    Route::post('/pinjam-buku/{id}', [BukuController::class, 'pinjamBuku']);
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/table-peminjaman', [RiwayatPinjamController::class, 'tablePeminjaman'])->name('table-peminjaman');
+        Route::get('/table-peminjam', [RiwayatPinjamController::class, 'tablePeminjam'])->name('table-peminjam');
+        Route::get('/table-riwayat', [RiwayatPinjamController::class, 'tableRiwayatPeminjaman'])->name('table-riwayat');
+        Route::get('/laporan-peminjaman', [RiwayatPinjamController::class, 'laporanPeminjaman'])->name('laporan.peminjaman');
+        Route::get('/cek-stok/{id}', [BukuController::class, 'cekStok']);
+        Route::post('/pinjam-buku/{id}', [BukuController::class, 'pinjamBuku']);
 
+        // Admin mengonfirmasi peminjaman (status: "Menunggu Pengambilan")
+        Route::put('/pinjam/{id}/konfirmasi', [RiwayatPinjamController::class, 'konfirmasiPinjam'])->name('pinjam.konfirmasi');
 
+        // User mengambil buku (status: "Dipinjam")
+        Route::put('/pinjam/{id}/ambil', [RiwayatPinjamController::class, 'ambilBuku'])->name('pinjam.ambil');
 
-    // Admin mengonfirmasi peminjaman (status: "Menunggu Pengambilan")
-    Route::put('/pinjam/{id}/konfirmasi', [RiwayatPinjamController::class, 'konfirmasiPinjam'])->name('pinjam.konfirmasi');
+        // User mengembalikan buku (status: "Dikembalikan", hitung keterlambatan & denda)
+        Route::put('/pinjam/{id}/kembalikan', [RiwayatPinjamController::class, 'kembalikanBuku'])->name('pinjam.kembalikan');
+        Route::delete('/pinjam/{id}/batalkan', [RiwayatPinjamController::class, 'batalkanPeminjaman'])->name('pinjam.batalkan');
+        Route::post('/pinjam/perpanjang/{id}', [RiwayatPinjamController::class, 'perpanjang'])->name('pinjam.perpanjang');
 
-    // User mengambil buku (status: "Dipinjam")
-    Route::put('/pinjam/{id}/ambil', [RiwayatPinjamController::class, 'ambilBuku'])->name('pinjam.ambil');
+        Route::get('/get-buku-pinjam', [RiwayatPinjamController::class, 'getBuku'])->name('pinjam.getbuku');
 
-    // User mengembalikan buku (status: "Dikembalikan", hitung keterlambatan & denda)
-    Route::put('/pinjam/{id}/kembalikan', [RiwayatPinjamController::class, 'kembalikanBuku'])->name('pinjam.kembalikan');
-    Route::delete('/pinjam/{id}/batalkan', [RiwayatPinjamController::class, 'batalkanPeminjaman'])->name('pinjam.batalkan');
-
-    Route::get('/get-buku-pinjam', [RiwayatPinjamController::class, 'getBuku'])->name('pinjam.getbuku');
-
-    Route::get('/halaman-denda', [RiwayatPinjamController::class, 'PembayaranDenda'])->name('halaman-riwayat');
-    Route::get('/riwayat-denda', [RiwayatPinjamController::class, 'riwayatPembayaranDenda'])->name('peminjaman-riwayat');
-    Route::post('/peminjaman-bayar-denda/{id}', [RiwayatPinjamController::class, 'bayarDenda'])->name('peminjaman-bayar-denda');
-    Route::get('/data-peminjam', [DashboardController::class, 'DataPeminjam'])->name('data-peminjam');
-
+        Route::get('/halaman-denda', [RiwayatPinjamController::class, 'PembayaranDenda'])->name('halaman-riwayat');
+        Route::get('/riwayat-denda', [RiwayatPinjamController::class, 'riwayatPembayaranDenda'])->name('peminjaman-riwayat');
+        Route::post('/peminjaman-bayar-denda/{id}', [RiwayatPinjamController::class, 'bayarDenda'])->name('peminjaman-bayar-denda');
+        Route::get('/data-peminjam', [DashboardController::class, 'DataPeminjam'])->name('data-peminjam');
+        Route::post('/reviews', [UlasanController::class, 'Ulasan'])->name('ulasan-buku');
+        Route::put('/ulasan/{id}/edit', [UlasanController::class, 'update'])->name('ulasan-edit');
+        Route::delete('/ulasan-hapus/{id}', [UlasanController::class, 'destroy'])->name('ulasan-hapus');
+    });
 
 
     Route::get('/cetaklaporan', CetakLaporanController::class);

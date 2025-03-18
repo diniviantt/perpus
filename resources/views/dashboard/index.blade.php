@@ -51,16 +51,6 @@
         {{ __("You're logged in!") }}
     </x-card>
 
-    @if (!empty($notifikasi))
-        <div class="p-4 mt-10 mb-4 text-blue-800 bg-blue-100 rounded-lg">
-            @foreach ($notifikasi as $pesan)
-                <p class="mb-1">{!! $pesan !!}</p>
-            @endforeach
-        </div>
-    @endif
-
-
-
 
     @role('peminjam')
         <div class="my-5 card-container">
@@ -94,6 +84,47 @@
                 </div>
             </div>
         </div>
+
+        @if (!empty($notifikasi))
+            <!-- Header Pemberitahuan -->
+            <div class="w-full p-4 bg-white border border-gray-300 rounded-lg shadow-md">
+                <div class="flex items-center gap-2">
+                    <div class="text-xl animate-bounce">🔔</div>
+                    <h2 class="text-2xl font-bold t">Pemberitahuan</h2>
+                </div>
+                <hr class="mt-2 border-gray-300">
+
+                <!-- Bubble Chat Notifikasi -->
+                <div class="flex flex-col w-full gap-3 mt-3">
+                    @foreach ($notifikasi as $notif)
+                        @php
+                            // Menentukan warna latar belakang & panah
+                            if (str_contains($notif['pesan'], '❗')) {
+                                $bgColor = 'bg-red-100';
+                                $arrowColor = 'border-r-red-100';
+                            } elseif (str_contains($notif['pesan'], '⏳') || str_contains($notif['pesan'], '⚠️')) {
+                                $bgColor = 'bg-yellow-100';
+                                $arrowColor = 'border-r-yellow-100';
+                            } else {
+                                $bgColor = 'bg-green-100';
+                                $arrowColor = 'border-r-green-100';
+                            }
+                        @endphp
+
+                        <div class="relative flex flex-col items-start p-3 shadow-md rounded-xl {{ $bgColor }}">
+                            <div
+                                class="absolute -left-2 -top-1 w-0 h-0 border-t-[14px] border-t-transparent border-r-[18px] {{ $arrowColor }} border-b-[14px] border-b-transparent rotate-[26deg]">
+                            </div>
+
+                            <!-- Pesan Notifikasi -->
+                            <p class="text-sm text-gray-800">{!! $notif['pesan'] !!}</p>
+
+
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <x-card class="p-6 mt-10 bg-white rounded-lg shadow-md">
             <h1 class="mb-4 text-2xl font-extrabold">Riwayat Peminjaman</h1>
@@ -152,6 +183,8 @@
             </div>
         </x-card>
     @endrole
+
+
 
     @role('admin')
         <div class="grid grid-cols-1 gap-4 my-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
