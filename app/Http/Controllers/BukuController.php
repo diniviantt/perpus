@@ -28,6 +28,10 @@ class BukuController extends Controller
 
         // Ambil semua buku atau filter berdasarkan kategori jika ada
         $buku = Buku::with('kategori_buku')
+            ->when(!$user->hasRole('admin'), function ($query) {
+                // Jika bukan admin, hanya tampilkan buku yang aktif
+                $query->where('status', 'Aktif');
+            })
             ->when($request->kategori, function ($query, $kategoriId) {
                 $query->whereHas('kategori_buku', function ($q) use ($kategoriId) {
                     $q->where('kategori_id', $kategoriId);
@@ -57,13 +61,18 @@ class BukuController extends Controller
             ->where('status', 'Dikembalikan') // Hanya menghitung peminjaman yang sudah dikembalikan
             ->groupBy('buku_id')
             ->orderByDesc('total_peminjaman')
-            ->with('buku') // Pastikan relasi ke model Buku ada
+            ->with(['buku' => function ($query) {
+                if (!auth()->user()->hasRole('admin')) {
+                    $query->where('status', 'Aktif'); // Jika bukan admin, hanya tampilkan buku aktif
+                }
+            }, 'buku.kategori_buku'])
             ->take(6) // Ambil 6 buku paling banyak dipinjam
             ->get()
             ->map(function ($item) {
                 return $item->buku; // Ambil data buku
             });
 
+        // dd($bukuTerpopuler);
 
         return view('buku.tampil', compact('buku', 'kategori', 'koleksiBukuIds', 'koleksi', 'bukuDipinjam', 'bukuTerpopuler'));
     }
@@ -407,5 +416,14 @@ class BukuController extends Controller
         }
 
         return response()->json(['status' => 'error', 'message' => 'Buku tidak ditemukan di koleksi user']);
+    }
+
+    public function toggleStatus($id)
+    {
+        $buku = Buku::findOrFail($id);
+        $buku->status = $buku->status === 'Aktif' ? 'Non Aktif' : 'Aktif';
+        $buku->save();
+
+        return response()->json(['message' => 'Status buku berhasil diperbarui!', 'status' => $buku->status]);
     }
 }

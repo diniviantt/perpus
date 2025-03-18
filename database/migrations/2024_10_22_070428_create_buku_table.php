@@ -21,6 +21,7 @@ return new class extends Migration
             $table->text('deskripsi');
             $table->string('gambar')->nullable();
             $table->integer('stock')->default(0);
+            $table->enum('status', ['Aktif', 'Non Aktif'])->default('Aktif')->nullable();
             $table->timestamps();
         });
     }

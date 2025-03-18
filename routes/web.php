@@ -66,6 +66,7 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
         Route::post('import-buku', [BukuController::class, 'import'])->name('import-buku');
         Route::get('list-buku', [BukuController::class, 'listBuku'])->name('list-buku');
         Route::get('table-buku', [BukuController::class, 'tableBuku'])->name('table-buku');
+        Route::patch('/buku/{id}/ubah-status', [BukuController::class, 'toggleStatus'])->name('buku-toggleStatus');
 
         Route::get('koleksi-buku', [BukuController::class, 'koleksiBuku'])->name('koleksi-buku');
         Route::delete('koleksi-buku/{id}', [BukuController::class, 'hapusKoleksi'])->name('hapus-koleksi');

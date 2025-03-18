@@ -160,30 +160,6 @@
         </div>
     @endrole
 
-
-    {{-- <!-- Modal Perpanjangan -->
-    <div id="modalPerpanjangan"
-        class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
-        <div class="w-1/3 p-6 bg-white rounded-lg shadow-lg">
-            <h2 class="mb-4 text-lg font-semibold">Perpanjang Peminjaman</h2>
-            <p class="mb-2">Silakan pilih durasi perpanjangan:</p>
-
-            <input type="hidden" id="peminjamanId">
-
-            <select id="durasiPerpanjangan" class="w-full p-2 border rounded">
-                <option value="3">3 Hari</option>
-                <option value="7" selected>7 Hari</option>
-                <option value="14">14 Hari</option>
-            </select>
-
-            <div class="flex justify-end mt-4">
-                <button onclick="tutupModal()" class="px-4 py-2 mr-2 bg-gray-300 rounded">Batal</button>
-                <button onclick="kirimPerpanjangan()"
-                    class="px-4 py-2 text-white bg-green-500 rounded">Perpanjang</button>
-            </div>
-        </div>
-    </div> --}}
-
     <div x-data="{ modalPeminjaman: false, modalPerpanjangan: false }" x-init="$store.modal = { modalPeminjaman: modalPeminjaman, modalPerpanjangan: modalPerpanjangan }">
         <x-slot name="modals">
             <form id="AddPeminjaman" aria-autocomplete="off">
@@ -227,13 +203,13 @@
                                 <div>
                                     <x-input-label for="buku_id" :text="__('Buku yang akan dipinjam')" />
                                     <select name="buku_id" id="buku_id"
-                                        class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">
-                                        <option value="">Pilih Buku</option>
-
-
+                                        class="block w-full px-4 py-4 mt-1 text-xs text-indigo-700 transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500 select2"
+                                        disabled>
+                                        <option class="text-xs" value="">Pilih Buku</option>
                                     </select>
                                     <x-input-error :messages="$errors->get('buku_id')" class="mt-2" />
                                 </div>
+
 
                             </div>
                         </div>
@@ -269,7 +245,7 @@
                                 <div>
                                     <x-input-label for="durasiPerpanjangan" :text="__('Silakan pilih durasi perpanjangan')" />
                                     <select name="durasiPerpanjangan" id="durasiPerpanjangan"
-                                        class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">
+                                        class="block w-full p-5 px-4 py-3 mt-1 text-sm text-indigo-700 transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">
                                         <option value="">Pilih Durasi Perpanjangan</option>
                                         <option value="1">1 Hari</option>
                                         <option value="2">2 Hari</option>
@@ -307,6 +283,30 @@
 
     <x-slot name="scripts">
         <script>
+            $('#buku_id').select2({
+                allowClear: true,
+                placeholder: "Pilih Buku",
+            });
+
+            // Menyesuaikan tampilan Select2 agar mirip dengan Tailwind CSS
+            $(".select2-selection").addClass(
+                "block w-full px-4 py-3 mt-1 text-sm text-indigo-700 transition-all duration-300 ease-in-out bg-white border border-gray-400 rounded-xl focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500"
+            );
+
+            // Menyesuaikan dropdown Select2 agar tampilan tidak berubah
+            $(".select2-container--default .select2-selection--single").css({
+                "height": "42px", // Sesuaikan dengan tinggi input lain
+                "display": "flex",
+                "align-items": "center",
+            });
+
+            $(".select2-container--default .select2-selection--multiple .select2-selection__arrow").css({
+                "top": "50%",
+                "right": "20px", // Pastikan posisinya pas
+                "transform": "translateY(-50%)",
+                "position": "absolute" // Pastikan posisinya mutlak
+            });
+
             $(document).ready(function() {
                 $('#Tablepeminjaman').DataTable({
                     processing: true,
@@ -674,14 +674,35 @@
             });
 
 
+            document.addEventListener("DOMContentLoaded", function() {
+                let users_id = document.getElementById("users_id");
+                let buku_id = document.getElementById("buku_id");
+
+                function updateBukuStatus() {
+                    if (users_id.value) {
+                        buku_id.disabled = false;
+                        GetBuku();
+                    } else {
+                        buku_id.innerHTML = '<option class="text-xs" value="">Pilih Buku</option>';
+                        buku_id.disabled = true;
+                    }
+                }
+
+                // Event listener untuk perubahan pada users_id
+                users_id.addEventListener("change", updateBukuStatus);
+
+                // Jalankan updateBukuStatus saat halaman dimuat untuk memastikan kondisi awal
+                updateBukuStatus();
+            });
+
             function GetBuku() {
                 fetch("/dashboard/get-buku-pinjam")
                     .then(res => res.json())
                     .then(data => {
                         let buku_id = document.getElementById('buku_id');
-                        buku_id.innerHTML = `<option value="">Pilih Buku</option>` +
+                        buku_id.innerHTML = `<option class="text-xs" value="">Pilih Buku</option>` +
                             (data.length ? data.map(item => `
-                    <option value="${item.id}" ${item.stock === 0 ? 'disabled' : ''}>
+                    <option class="text-xs" value="${item.id}" ${item.stock === 0 ? 'disabled' : ''}>
                         ${item.judul} (${item.kode_buku}) - Stok: ${item.stock} ${item.stock === 0 ? '(HABIS)' : ''}
                     </option>
                 `).join('') : '<option disabled>⚠️ Semua buku habis</option>');
@@ -859,7 +880,7 @@
                     // Kirim data ke server melalui AJAX
                     $.ajax({
                         url: '/dashboard/pinjam/perpanjang/' +
-                        peminjamanId, // Ganti dengan URL yang sesuai
+                            peminjamanId, // Ganti dengan URL yang sesuai
                         type: 'POST',
                         data: {
                             _token: $('meta[name="csrf-token"]').attr('content'),

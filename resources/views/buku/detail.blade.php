@@ -1,5 +1,4 @@
 <x-app-layout title="{{ __('Detail Buku') }}">
-    <x-header value="{{ __('Detail Buku') }}" />
     <x-session-status />
 
     <div class="flex p-6 mb-6 bg-white rounded-lg shadow-lg">
@@ -33,103 +32,137 @@
             <h5 class="mt-4 text-lg font-semibold text-gray-800">Kategori:</h5>
             <div class="flex flex-wrap gap-2 mt-2">
                 @foreach ($buku->kategori_buku as $k)
-                    <span class="inline-block px-3 py-1 text-sm font-semibold text-white bg-blue-500 rounded-full">
+                    <span
+                        class="inline-block px-2 py-1 text-xs font-semibold text-blue-500 border border-blue-500 rounded-full">
                         {{ $k->nama }}
                     </span>
                 @endforeach
             </div>
 
+
             <div class="flex items-center justify-between mt-28">
-                <a href="{{ route('buku.index') }}"
-                    class="flex items-center px-4 py-2.5 text-white transition duration-200 bg-blue-500 rounded-full hover:bg-blue-600">
-                    <i class="text-lg fas fa-arrow-left"></i>
-                </a>
+                <!-- Tombol Kembali -->
+                <div class="relative group">
+                    <a href="{{ route('buku.index') }}"
+                        class="flex items-center justify-center w-12 h-12 text-blue-500 transition duration-200 border-2 border-blue-500 rounded-full ring-blue-500 hover:bg-blue-100">
+                        <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                    </a>
+                    <span
+                        class="absolute px-3 py-1 text-xs text-white transition-opacity -translate-x-1/2 bg-gray-700 rounded-md opacity-0 whitespace-nowrap group-hover:opacity-100 -top-12 left-1/2">
+                        Kembali
+                    </span>
+                </div>
+
                 @role('peminjam')
-                    @if ($bukuDipinjam)
-                        <button
-                            class="flex items-center px-4 py-2.5 text-white bg-gray-500 rounded-full cursor-not-allowed">
-                            <span>📖 Sedang Anda Dipinjam</span>
-                        </button>
-                    @else
-                        <a href="#" id="pinjamSekarang" data-buku-id="{{ $buku->id }}"
-                            class="flex items-center px-4 py-2.5 text-white transition duration-200 bg-blue-500 rounded-full hover:bg-blue-600">
-                            <span>Pinjam Sekarang!</span>
-                        </a>
-                    @endif
+                    <div class="flex items-center gap-4">
+                        @if ($bukuDipinjam)
+                            <!-- Tombol "Sedang Anda Pinjam" -->
+                            <button
+                                class="flex items-center gap-2 px-6 py-3 text-gray-500 transition duration-200 border-2 border-gray-500 rounded-full cursor-not-allowed ring-gray-500">
+                                <i data-lucide="book-open" class="w-5 h-5"></i>
+                                <span>Sedang Anda Pinjam</span>
+                            </button>
+                        @else
+                            <!-- Tombol Pinjam -->
+                            <div class="relative group">
+                                <button id="pinjamSekarang" data-buku-id="{{ $buku->id }}"
+                                    class="flex items-center gap-2 px-6 py-3 text-blue-500 transition duration-200 border-2 border-blue-500 rounded-full ring-blue-500 hover:bg-blue-100">
+                                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                                    <span>Pinjam</span>
+                                </button>
+                                <span
+                                    class="absolute px-3 py-1 text-xs text-white transition-opacity -translate-x-1/2 bg-gray-700 rounded-md opacity-0 whitespace-nowrap group-hover:opacity-100 -top-12 left-1/2">
+                                    Pinjam Buku
+                                </span>
+                            </div>
+                        @endif
+
+                        <!-- Tombol Bookmark -->
+                        <div class="relative group">
+                            <button id="bookmarkBuku" data-buku-id="{{ $buku->id }}"
+                                class="flex items-center justify-center w-12 h-12 text-blue-500 transition duration-200 border-2 border-blue-500 rounded-full ring-blue-500 hover:bg-gray-100">
+                                <i data-lucide="bookmark" class="w-5 h-5"></i>
+                            </button>
+                            <span
+                                class="absolute px-3 py-1 text-xs text-white transition-opacity -translate-x-1/2 bg-gray-700 rounded-md opacity-0 whitespace-nowrap group-hover:opacity-100 -top-12 left-1/2">
+                                Simpan ke Bookmark
+                            </span>
+                        </div>
+                    </div>
                 @endrole
-
             </div>
-        </div>
 
+        </div>
     </div>
 
-    <div class="w-full p-6 mx-auto bg-white border border-gray-200 shadow-md rounded-xl">
-        {{-- Header Section --}}
-        <h2 class="mb-4 text-lg font-semibold text-gray-800">
-            Ulasan Pengguna ({{ $reviews->count() }})
-        </h2>
+    @role('peminjam')
+        <div class="w-full p-6 mx-auto bg-white border border-gray-200 shadow-md rounded-xl">
+            {{-- Header Section --}}
+            <h2 class="mb-4 text-lg font-semibold text-gray-800">
+                Ulasan Pengguna ({{ $reviews->count() }})
+            </h2>
 
-        {{-- Daftar Ulasan --}}
-        <div class="space-y-4 overflow-y-auto max-h-72">
-            @forelse ($reviews as $review)
-                <div class="relative p-5 border border-gray-200 rounded-lg shadow-sm bg-gray-50 review-item"
-                    data-id="{{ $review->id }}">
-                    {{-- Header Ulasan --}}
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            {{-- Foto Profil --}}
-                            <img src="{{ $review->user->avatar ? asset('storage/' . $review->user->avatar) : asset('assets/img/profile.webp') }}"
-                                alt="User Profile" class="w-10 h-10 border border-gray-300 rounded-full shadow-sm">
+            {{-- Daftar Ulasan --}}
+            <div class="space-y-4 overflow-y-auto max-h-72">
+                @forelse ($reviews as $review)
+                    <div class="relative p-5 border border-gray-200 rounded-lg shadow-sm bg-gray-50 review-item"
+                        data-id="{{ $review->id }}">
+                        {{-- Header Ulasan --}}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                {{-- Foto Profil --}}
+                                <img src="{{ $review->user->avatar ? asset('storage/' . $review->user->avatar) : asset('assets/img/profile.webp') }}"
+                                    alt="User Profile" class="w-10 h-10 border border-gray-300 rounded-full shadow-sm">
 
-                            <div class="ml-4">
-                                <p class="text-sm font-semibold text-gray-900">{{ $review->user->email }}</p>
-                                <p class="text-xs text-gray-500">
-                                    {{ \Carbon\Carbon::parse($review->created_at)->format('d M Y') }}
-                                </p>
+                                <div class="ml-4">
+                                    <p class="text-sm font-semibold text-gray-900">{{ $review->user->email }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ \Carbon\Carbon::parse($review->created_at)->format('d M Y') }}
+                                    </p>
+                                </div>
                             </div>
+
+                            {{-- Tombol Hapus (hanya jika user yang login adalah pemilik ulasan) --}}
+                            @if (auth()->id() === $review->users_id)
+                                <button type="button" class="text-gray-600 hover:text-gray-900 hapus-ulasan"
+                                    data-id="{{ $review->id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            @endif
                         </div>
 
-                        {{-- Tombol Hapus (hanya jika user yang login adalah pemilik ulasan) --}}
-                        @if (auth()->id() === $review->users_id)
-                            <button type="button" class="text-gray-600 hover:text-gray-900 hapus-ulasan"
-                                data-id="{{ $review->id }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        @endif
+                        {{-- Isi Ulasan --}}
+                        <p class="mt-2 text-sm leading-relaxed text-gray-700">
+                            {{ $review->ulasan }}
+                        </p>
                     </div>
+                @empty
+                    <p class="text-sm text-gray-500">Belum ada ulasan.</p>
+                @endforelse
+            </div>
 
-                    {{-- Isi Ulasan --}}
-                    <p class="mt-2 text-sm leading-relaxed text-gray-700">
-                        {{ $review->ulasan }}
-                    </p>
-                </div>
-            @empty
-                <p class="text-sm text-gray-500">Belum ada ulasan.</p>
-            @endforelse
+            {{-- Form Tambah Ulasan --}}
+            <div class="mt-6">
+                <h3 class="mb-3 text-sm font-semibold text-gray-800">Tulis Ulasan Anda</h3>
+
+                <form action="{{ route('ulasan-buku') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="buku_id" value="{{ $buku->id }}">
+
+                    {{-- Input Ulasan --}}
+                    <textarea name="ulasan" class="w-full p-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="Bagikan pengalaman Anda tentang buku ini..." maxlength="500"></textarea>
+
+                    {{-- Tombol Kirim --}}
+                    <button type="submit"
+                        class="flex items-center gap-2 px-5 py-2 mt-4 text-sm font-semibold text-gray-700 transition bg-white border border-gray-300 rounded-full ring-gray-300 hover:bg-gray-100">
+                        <i class="fas fa-paper-plane"></i>
+                        Kirim Ulasan
+                    </button>
+                </form>
+            </div>
         </div>
-
-        {{-- Form Tambah Ulasan --}}
-        <div class="mt-6">
-            <h3 class="mb-3 text-sm font-semibold text-gray-800">Tulis Ulasan Anda</h3>
-
-            <form action="{{ route('ulasan-buku') }}" method="POST">
-                @csrf
-                <input type="hidden" name="buku_id" value="{{ $buku->id }}">
-
-                {{-- Input Ulasan --}}
-                <textarea name="ulasan" class="w-full p-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Bagikan pengalaman Anda tentang buku ini..." maxlength="500"></textarea>
-
-                {{-- Tombol Kirim --}}
-                <button type="submit"
-                    class="flex items-center gap-2 px-5 py-2 mt-4 text-sm font-semibold text-gray-700 transition bg-white border border-gray-300 rounded-full ring-gray-300 hover:bg-gray-100">
-                    <i class="fas fa-paper-plane"></i>
-                    Kirim Ulasan
-                </button>
-            </form>
-        </div>
-    </div>
-
+    @endrole
     <x-slot name="styles">
         <style>
             .text-container {
@@ -222,7 +255,7 @@
                                         },
                                         didOpen: (toast) => {
                                             toast.style.animation =
-                                            "none"; // Hapus animasi getar
+                                                "none"; // Hapus animasi getar
                                         }
                                     });
 
@@ -255,44 +288,57 @@
 
 
             $(document).ready(function() {
-                $("#pinjamSekarang").on("click", function(e) {
+                $(document).on("click", "#pinjamSekarang", function(e) {
                     e.preventDefault(); // Hindari reload halaman
 
                     let bukuId = $(this).data("buku-id"); // Ambil ID buku dari tombol
-                    let userId = "{{ auth()->user()->id }}"; // Ambil ID user yang sedang login
                     let csrfToken = $('meta[name="csrf-token"]').attr("content");
+                    let button = $(this); // Simpan referensi tombol
 
-                    // Kirim permintaan peminjaman via AJAX
                     $.ajax({
-                        url: "{{ route('peminjaman.store') }}",
+                        url: "/dashboard/pinjam-buku/" + bukuId, // Pastikan route benar
                         type: "POST",
                         data: {
-                            buku_id: bukuId,
-                            users_id: userId,
                             _token: csrfToken
                         },
                         beforeSend: function() {
-                            $("#pinjamSekarang").text("Memproses...").prop("disabled", true);
+                            button.html('<i class="w-5 h-5 animate-spin">⏳</i> Memproses...').prop(
+                                "disabled", true);
                         },
                         success: function(response) {
-                            Swal.fire({
-                                title: "Berhasil!",
-                                text: "Peminjaman berhasil diajukan.",
-                                icon: "success",
-                                confirmButtonColor: "#3085d6",
-                                confirmButtonText: "OK",
-                            }).then(() => {
-                                $("#pinjamSekarang").text("Pinjam Sekarang!").prop(
-                                    "disabled", false);
-                                window.location.reload();
-                            });
+                            if (response.success) {
+                                Swal.fire({
+                                    title: "Berhasil!",
+                                    text: response.message,
+                                    icon: "success",
+                                    confirmButtonColor: "#3085d6",
+                                    confirmButtonText: "OK",
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                button.html('<i class="w-5 h-5">📖</i> Pinjam').prop("disabled",
+                                    false);
+                                Swal.fire({
+                                    title: "Gagal!",
+                                    text: response.message,
+                                    icon: "error",
+                                    confirmButtonColor: "#d33",
+                                    confirmButtonText: "OK",
+                                });
+                            }
                         },
                         error: function(xhr) {
-                            $("#pinjamSekarang").text("Pinjam Sekarang!").prop("disabled", false);
+                            button.html('<i class="w-5 h-5">📖</i> Pinjam').prop("disabled", false);
+
+                            let errorMessage = "Terjadi kesalahan, coba lagi nanti.";
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
 
                             Swal.fire({
                                 title: "Gagal!",
-                                text: "Terjadi kesalahan, coba lagi nanti.",
+                                text: errorMessage,
                                 icon: "error",
                                 confirmButtonColor: "#d33",
                                 confirmButtonText: "OK",

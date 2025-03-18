@@ -89,13 +89,12 @@
             @forelse ($buku as $item)
                 <div id="buku-{{ $item->id }}" class="w-full h-max"> <!-- Tambahkan w-full -->
                     <div class="flex w-full overflow-hidden bg-white rounded-lg shadow-md h-72">
-                        <!-- Tambahkan w-full -->
-                        {{-- Gambar --}}
-                        <div class="w-1/2 h-full">
-                            <img class="object-cover w-full h-full"
+                        <div class="flex w-1/2 h-full p-2 bg-white">
+                            <img class="object-cover w-full h-full rounded-lg"
                                 src="{{ asset('/images/' . ($item->gambar ?? 'noImage.jpg')) }}"
                                 alt="{{ $item->judul }}">
                         </div>
+
 
                         {{-- Keterangan Buku --}}
                         <div class="flex flex-col justify-between w-1/2 p-4">
@@ -108,57 +107,94 @@
                                 <p class="text-sm text-gray-600">Pengarang: <span
                                         class="text-indigo-500">{{ $item->pengarang }}</span></p>
                                 <p class="text-sm text-gray-600">Kategori:</p>
-                                <div class="flex flex-wrap gap-1">
+                                <div class="gap-2">
                                     @foreach ($item->kategori_buku as $kategori_buku)
-                                        <span class="px-2 py-1 text-xs text-white bg-indigo-500 rounded-full">
+                                        <span
+                                            class="px-1 text-[10px] text-indigo-500 border border-indigo-500 rounded-full mr-1">
                                             {{ $kategori_buku->nama }}
                                         </span>
                                     @endforeach
                                 </div>
-                                <p class="text-sm text-gray-600">Stock:</p>
-                                @if ($item->stock > 0)
-                                    <p class="px-2 py-1 text-xs text-white bg-green-500 rounded-full w-max">Tersedia
-                                        ({{ $item->stock }})
+
+
+
+                                <div class="items-center gap-2 ">
+                                    <p class="text-sm text-gray-600">Stock:
+                                        @if ($item->stock > 0)
+                                            <span
+                                                class="px-1 text-[10px] text-green-600 border border-green-500 rounded-full ring-green-500">
+                                                Tersedia ({{ $item->stock }})
+                                            </span>
+                                        @else
+                                            <span
+                                                class="px-1 text-[10px] text-red-600 border border-red-500 rounded-full ring-red-500">
+                                                Habis
+                                            </span>
+                                        @endif
                                     </p>
-                                    <p class="mt-1 text-xs text-gray-500">Buku ini masih tersedia untuk dipinjam.</p>
-                                @else
-                                    <p class="px-2 py-1 text-xs text-white bg-red-500 rounded-full w-max">Habis</p>
-                                    <p class="mt-1 text-xs text-gray-500">Maaf, buku ini sedang tidak tersedia.</p>
-                                @endif
+
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    @if ($item->stock > 0)
+                                        Buku ini masih tersedia untuk dipinjam.
+                                    @else
+                                        Maaf, buku ini sedang tidak tersedia.
+                                    @endif
+                                </p>
+
+
                             </div>
 
                             {{-- Tombol Aksi --}}
                             <div class="flex space-x-2">
                                 <a href="{{ route('buku.show', $item->id) }}"
-                                    class="flex items-center justify-center w-8 h-8 text-white transition bg-blue-600 rounded hover:bg-blue-700"
+                                    class="flex items-center justify-center w-8 h-8 text-blue-500 transition border border-blue-500 rounded-lg hover:bg-blue-300 hover:text-white"
                                     aria-label="Detail" title="Lihat Detail">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </a>
 
                                 @role('admin')
                                     <a href="{{ route('buku.edit', $item->id) }}"
-                                        class="flex items-center justify-center w-8 h-8 text-white transition bg-yellow-500 rounded hover:bg-yellow-600"
+                                        class="flex items-center justify-center w-8 h-8 text-yellow-500 transition border border-yellow-500 rounded-lg hover:bg-yellow-300 hover:text-white"
                                         aria-label="Edit" title="Edit Buku">
                                         <i data-lucide="square-pen" class="w-5 h-5"></i>
                                     </a>
                                     <button
-                                        class="flex items-center justify-center w-8 h-8 text-white transition bg-red-500 rounded hover:bg-red-600"
+                                        class="flex items-center justify-center w-8 h-8 text-red-500 transition border border-red-500 rounded-lg hover:bg-red-300 hover:text-white"
                                         onclick="confirmDelete({{ $item->id }})" aria-label="Delete"
                                         title="Hapus Buku">
                                         <i data-lucide="trash" class="w-4 h-4"></i>
                                     </button>
+                                    @if ($item->status === 'Aktif')
+                                        <!-- Tombol untuk Nonaktifkan -->
+                                        <button
+                                            class="flex items-center justify-center w-8 h-8 text-orange-500 transition border border-orange-500 rounded-lg hover:bg-orange-300 hover:text-white"
+                                            onclick="toggleStatus({{ $item->id }})" aria-label="Nonaktifkan Buku"
+                                            title="Nonaktifkan Buku">
+                                            <i data-lucide="power-off" class="w-4 h-4"></i>
+                                        </button>
+                                    @else
+                                        <!-- Tombol untuk Aktifkan -->
+                                        <button
+                                            class="flex items-center justify-center w-8 h-8 text-blue-500 transition border border-blue-500 rounded-lg hover:bg-blue-300 hover:text-white"
+                                            onclick="toggleStatus({{ $item->id }})" aria-label="Aktifkan Buku"
+                                            title="Aktifkan Buku">
+                                            <i data-lucide="power" class="w-4 h-4"></i>
+                                        </button>
+                                    @endif
                                 @else
                                     @if (in_array($item->id, $bukuDipinjamIds))
                                         {{-- Jika buku sedang dipinjam, tampilkan ikon disabled --}}
                                         <button
-                                            class="flex items-center justify-center w-8 h-8 text-gray-500 bg-gray-300 rounded cursor-not-allowed"
+                                            class="flex items-center justify-center w-8 h-8 text-gray-500 border border-gray-300 rounded-lg cursor-not-allowed"
                                             title="Buku sedang dipinjam">
                                             <i class="w-4 h-4" data-lucide="book-open-check"></i>
                                         </button>
                                     @else
                                         {{-- Jika buku bisa dipinjam, tampilkan tombol interaktif --}}
-                                        <button id="pinjamSekarang-{{ $item->id }}" data-buku-id="{{ $item->id }}"
-                                            class="flex items-center justify-center w-8 h-8 text-white bg-blue-500 rounded hover:bg-blue-700"
+                                        <button id="pinjamSekarang-{{ $item->id }}"
+                                            data-buku-id="{{ $item->id }}"
+                                            class="flex items-center justify-center w-8 h-8 text-blue-500 transition border border-blue-500 rounded-lg hover:bg-blue-300 hover:text-white"
                                             title="Pinjam Buku">
                                             <i class="w-4 h-4" data-lucide="book-open"></i>
                                         </button>
@@ -169,7 +205,7 @@
                                     @if (!in_array($item->id, $koleksiBukuIds))
                                         <button id="btn-tambah-koleksi" onclick="tambahKoleksi({{ $item->id }})"
                                             data-id="{{ $item->id }}"
-                                            class="flex items-center justify-center w-8 h-8 text-white transition bg-purple-600 rounded hover:bg-purple-700"
+                                            class="flex items-center justify-center w-8 h-8 text-purple-500 transition border border-purple-500 rounded-lg hover:bg-purple-300 hover:text-white"
                                             aria-label="Tambah ke Koleksi" title="Tambahkan ke Koleksi">
                                             <i data-lucide="bookmark" class="w-4 h-4"></i>
                                         </button>
@@ -177,7 +213,7 @@
                                         @foreach ($koleksi as $k)
                                             @if ($k->buku_id == $item->id)
                                                 <button
-                                                    class="flex items-center justify-center w-8 h-8 text-white transition bg-red-500 rounded hover:bg-red-600"
+                                                    class="flex items-center justify-center w-8 h-8 text-red-500 transition border border-red-500 rounded-lg hover:bg-red-300 hover:text-white"
                                                     onclick="confirmDeleteKoleksi({{ $k->id }})"
                                                     aria-label="Hapus dari Koleksi" title="Hapus dari Koleksi">
                                                     <i data-lucide="bookmark-x" class="w-4 h-4"></i>
@@ -198,6 +234,157 @@
         </div>
     </div>
 
+    <div x-data="{ modalUpload: false, modalBuku: false }" x-init="$store.modal = { modalUpload: modalUpload, modalBuku: modalBuku }">
+        <x-slot name="modals">
+
+            <form id="modalBuku" action="{{ route('buku.store') }}" method="POST" enctype="multipart/form-data"
+                class="space-y-4">
+                @csrf
+                <x-modal modal="$store.modal.modalBuku" dialog="modal-modalBuku-dialog">
+                    <div class="px-5 bg-white sm:p-7 sm:pb-0">
+                        <div class="mt-5 sm:mt-0">
+                            <x-modal-title :label="__('Tambah Data Buku')" />
+                            <div class="grid grid-cols-1 gap-4 my-2 lg:grid-cols-2">
+                                <!-- Judul Buku -->
+                                <div>
+                                    <x-input-label for="judul" :text="__('Judul Buku')" />
+                                    <x-text-input name="judul" id="judul" class="mt-1" :value="old('judul')"
+                                        required />
+                                    <x-input-error :messages="$errors->get('judul')" class="mt-2" />
+                                </div>
+
+                                <!-- Kode Buku -->
+                                <div>
+                                    <x-input-label for="kode_buku" :text="__('Kode Buku')" />
+                                    <x-text-input name="kode_buku" id="kode_buku" class="mt-1" :value="old('kode_buku')"
+                                        required />
+                                    <x-input-error :messages="$errors->get('kode_buku')" class="mt-2" />
+                                </div>
+
+
+                                <!-- Kategori (Full Width, Menggunakan Select2) -->
+                                <div class="lg:col-span-2">
+                                    <x-input-label for="kategori" :text="__('Kategori')" />
+                                    <select name="kategori_buku[]" id="multiselect" multiple
+                                        class="w-full mt-1 rounded-md">
+                                        @foreach ($kategori as $item)
+                                            <option value="{{ $item->id }}">{{ $item->nama }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error :messages="$errors->get('kategori')" class="mt-2" />
+                                </div>
+
+                                <!-- Pengarang -->
+                                <div>
+                                    <x-input-label for="pengarang" :text="__('Pengarang')" />
+                                    <x-text-input name="pengarang" id="pengarang" class="mt-1" :value="old('pengarang')"
+                                        required />
+                                    <x-input-error :messages="$errors->get('pengarang')" class="mt-2" />
+                                </div>
+
+                                <!-- Penerbit -->
+                                <div>
+                                    <x-input-label for="penerbit" :text="__('Penerbit')" />
+                                    <x-text-input name="penerbit" id="penerbit" class="mt-1" :value="old('penerbit')"
+                                        required />
+                                    <x-input-error :messages="$errors->get('penerbit')" class="mt-2" />
+                                </div>
+
+                                <!-- Tahun Terbit -->
+                                <div>
+                                    <x-input-label for="tahun_terbit" :text="__('Tahun Terbit')" />
+                                    <x-text-input name="tahun_terbit" id="tahun_terbit" class="mt-1"
+                                        :value="old('tahun_terbit')" required />
+                                    <x-input-error :messages="$errors->get('tahun_terbit')" class="mt-2" />
+                                </div>
+
+                                <!-- Stock -->
+                                <div>
+                                    <x-input-label for="stock" :text="__('Stock')" />
+                                    <x-text-input type="number" name="stock" id="stock" class="mt-1"
+                                        :value="old('stock')" required />
+                                    <x-input-error :messages="$errors->get('stock')" class="mt-2" />
+                                </div>
+
+                                <!-- Gambar (Full Width) -->
+                                <div class="lg:col-span-2">
+                                    <x-input-label for="gambar" :text="__('Tambah Sampul Buku')" />
+                                    <x-text-input type="file" name="gambar" id="gambar" class="mt-1"
+                                        required />
+                                    <x-input-error :messages="$errors->get('gambar')" class="mt-2" />
+                                </div>
+
+                                <!-- Deskripsi (Full Width) -->
+                                <div class="lg:col-span-2">
+                                    <x-input-label for="deskripsi" :text="__('Deskripsi')" />
+                                    <textarea name="deskripsi" id="deskripsi" rows="3"
+                                        class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">
+                                        {{ old('deskripsi') }}
+                                    </textarea>
+                                    <x-input-error :messages="$errors->get('deskripsi')" class="mt-2" />
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-4 sm:flex sm:flex-row-reverse">
+                        <x-modal-button type="submit"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Simpan') }}
+                        </x-modal-button>
+
+                        <x-modal-button x-on:click="$store.modal.modalBuku = false" type="button"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Batal') }}
+                        </x-modal-button>
+                    </div>
+                </x-modal>
+            </form>
+
+            <form id="UploadBuku" action="{{ route('import-buku') }}" method="POST" class="space-y-4">
+                @csrf
+                <x-modal modal="$store.modal.modalUpload" dialog="modal-modalUpload-dialog">
+                    <div class="px-5 bg-white sm:p-7 sm:pb-0">
+                        <div class="mt-5 sm:mt-0">
+                            <x-modal-title :label="__('Upload File Buku')" />
+                            <div class="my-2 space-y-3">
+                                <div>
+                                    <span
+                                        class="block px-3 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-400 rounded-lg">
+                                        Pastikan sudah mengunduh file!
+                                        <a href="{{ route('buku-export') }}" class="text-blue-700 underline">Unduh
+                                            Template</a>
+                                    </span>
+
+                                    <input type="file" name="import" id="file" autocomplete="off"
+                                        class="block w-full px-4 py-3 mt-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-indigo-500/30 focus:border-indigo-500 placeholder:text-gray-400"
+                                        required />
+                                    <p id="file-name" class="mt-2 text-sm text-gray-600"></p>
+
+                                    <x-input-error :messages="$errors->get('import')" class="mt-2" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-4 sm:flex sm:flex-row-reverse">
+                        <x-modal-button type="submit"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Upload') }}
+                        </x-modal-button>
+
+                        <x-modal-button x-on:click="$store.modal.modalUpload = false" type="button"
+                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
+                            {{ __('Batal') }}
+                        </x-modal-button>
+                    </div>
+                </x-modal>
+            </form>
+
+        </x-slot>
+    </div>
+
 
 
     <div class="mx-2 my-5">
@@ -205,38 +392,76 @@
     </div>
 
     <!-- Buku Terpopuler -->
-    <div class="bg-white">
-        <h2 class="mb-4 text-2xl font-bold text-gray-700 ">🔥 Buku Terpopuler</h2>
-        <div class="grid grid-cols-1 gap-6 mb-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            @if ($bukuTerpopuler->isNotEmpty())
-                <h2 class="text-2xl font-bold text-gray-700">📚 Buku Terpopuler</h2>
-                <div class="grid grid-cols-1 gap-6 mt-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
-                    @foreach ($bukuTerpopuler as $buku)
-                        <div class="w-full bg-white rounded-lg shadow-md">
-                            <img class="object-cover w-full h-48 rounded-t-lg"
-                                src="{{ asset('/images/' . ($buku->gambar ?? 'noImage.jpg')) }}"
-                                alt="{{ $buku->judul }}">
-                            <div class="p-4">
-                                <h5 class="text-lg font-bold text-indigo-600">
-                                    <a href="{{ route('buku.show', $buku->id) }}" class="hover:underline">
-                                        {{ $buku->judul }}
-                                    </a>
-                                </h5>
-                                <p class="text-sm text-gray-600">Pengarang: <span
-                                        class="text-indigo-500">{{ $buku->pengarang }}</span></p>
-                                <p class="text-sm text-gray-600">Kode Buku: {{ $buku->kode_buku }}</p>
-                                <p class="mt-2 text-xs text-gray-500">📖 Dipinjam: {{ $buku->peminjaman->count() }}
-                                    kali</p>
+    <div class="p-5 bg-white rounded-lg">
+        @if ($bukuTerpopuler->isNotEmpty())
+            <h2 class="mb-5 text-2xl font-bold text-gray-700">📚 Buku Terpopuler</h2>
+            <div class="grid grid-cols-1 gap-4">
+                @foreach ($bukuTerpopuler as $populer)
+                    <div class="flex items-start gap-4 p-4 bg-white border rounded-lg shadow-md">
+                        <!-- Gambar Buku -->
+                        <div class="w-40 h-full">
+                            <img class="object-cover w-full h-full rounded-md"
+                                src="{{ asset('/images/' . ($populer->gambar ?? 'noImage.jpg')) }}"
+                                alt="{{ $populer->judul }}">
+                        </div>
+
+                        <!-- Informasi Buku -->
+                        <div class="flex flex-col flex-1">
+                            <h5 class="mb-2 text-lg font-bold text-indigo-600">
+                                <a href="{{ route('buku.show', $populer->id) }}" class="hover:underline">
+                                    {{ $populer->judul }}
+                                </a>
+                            </h5>
+                            <p class="mb-3 text-sm text-gray-600 text-wrap"
+                                style="text-indent: 0.75rem; letter-spacing: 0.05rem; word-spacing: 0.1rem;">
+                                {{ $populer->deskripsi }}
+                            </p>
+                            <p class="text-sm text-gray-600">Pengarang:
+                                <span class="text-indigo-500">{{ $populer->pengarang }}</span>
+                            </p>
+
+                            <!-- Menampilkan kategori -->
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($populer->kategori_buku as $kategori)
+                                    <span class="px-2 py-1 text-xs text-indigo-500 border border-indigo-500 rounded">
+                                        {{ $kategori->nama }}
+                                    </span>
+                                @endforeach
+                            </div>
+
+                            <!-- Tombol Detail & Pinjam -->
+                            <div class="flex gap-2 mt-3">
+                                <a href="{{ route('buku.show', $populer->id) }}"
+                                    class="p-2 text-indigo-500 transition border border-indigo-500 rounded-full hover:bg-indigo-500 hover:text-white">
+                                    <!-- Heroicon Eye -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path
+                                            d="M10 3C4 3 1 10 1 10s3 7 9 7 9-7 9-7-3-7-9-7zm0 12a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z" />
+                                    </svg>
+                                </a>
+                                <button
+                                    class="p-2 text-green-500 transition border border-green-500 rounded-full hover:bg-green-500 hover:text-white">
+                                    <!-- Heroicon Bookmark -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path d="M6 2a2 2 0 00-2 2v14l6-4 6 4V4a2 2 0 00-2-2H6z" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-            @else
-                <p class="mt-4 text-gray-600">Belum ada buku terpopuler.</p>
-            @endif
-
-        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p class="pl-5 mb-5 text-center text-gray-600">Belum ada buku terpopuler.</p>
+        @endif
     </div>
+
+
+    </div>
+
+
 
 
 
@@ -618,159 +843,25 @@
                     });
                 });
             });
+
+            function toggleStatus(id) {
+                fetch(`{{ route('buku-toggleStatus', ':id') }}`.replace(':id', id), {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        location.reload();
+                    })
+                    .catch(error => console.error("Error:", error));
+            }
         </script>
     </x-slot>
 
 
-    <div x-data="{ modalUpload: false, modalBuku: false }" x-init="$store.modal = { modalUpload: modalUpload, modalBuku: modalBuku }">
-        <x-slot name="modals">
 
-            <form id="modalBuku" action="{{ route('buku.store') }}" method="POST" enctype="multipart/form-data"
-                class="space-y-4">
-                @csrf
-                <x-modal modal="$store.modal.modalBuku" dialog="modal-modalBuku-dialog">
-                    <div class="px-5 bg-white sm:p-7 sm:pb-0">
-                        <div class="mt-5 sm:mt-0">
-                            <x-modal-title :label="__('Tambah Data Buku')" />
-                            <div class="grid grid-cols-1 gap-4 my-2 lg:grid-cols-2">
-                                <!-- Judul Buku -->
-                                <div>
-                                    <x-input-label for="judul" :text="__('Judul Buku')" />
-                                    <x-text-input name="judul" id="judul" class="mt-1" :value="old('judul')"
-                                        required />
-                                    <x-input-error :messages="$errors->get('judul')" class="mt-2" />
-                                </div>
-
-                                <!-- Kode Buku -->
-                                <div>
-                                    <x-input-label for="kode_buku" :text="__('Kode Buku')" />
-                                    <x-text-input name="kode_buku" id="kode_buku" class="mt-1" :value="old('kode_buku')"
-                                        required />
-                                    <x-input-error :messages="$errors->get('kode_buku')" class="mt-2" />
-                                </div>
-
-                                <!-- Kategori (Full Width, Menggunakan Select2) -->
-                                <div class="lg:col-span-2">
-                                    <x-input-label for="kategori" :text="__('Kategori')" />
-                                    <select name="kategori_buku[]" id="multiselect" multiple
-                                        class="w-full mt-1 rounded-md">
-                                        @forelse ($kategori as $item)
-                                            <option value="{{ $item->id }}">{{ $item->nama }}</option>
-                                        @empty
-                                            <option disabled>Tidak ada kategori</option>
-                                        @endforelse
-                                    </select>
-                                    <x-input-error :messages="$errors->get('kategori')" class="mt-2" />
-                                </div>
-
-                                <!-- Pengarang -->
-                                <div>
-                                    <x-input-label for="pengarang" :text="__('Pengarang')" />
-                                    <x-text-input name="pengarang" id="pengarang" class="mt-1" :value="old('pengarang')"
-                                        required />
-                                    <x-input-error :messages="$errors->get('pengarang')" class="mt-2" />
-                                </div>
-
-                                <!-- Penerbit -->
-                                <div>
-                                    <x-input-label for="penerbit" :text="__('Penerbit')" />
-                                    <x-text-input name="penerbit" id="penerbit" class="mt-1" :value="old('penerbit')"
-                                        required />
-                                    <x-input-error :messages="$errors->get('penerbit')" class="mt-2" />
-                                </div>
-
-                                <!-- Tahun Terbit -->
-                                <div>
-                                    <x-input-label for="tahun_terbit" :text="__('Tahun Terbit')" />
-                                    <x-text-input name="tahun_terbit" id="tahun_terbit" class="mt-1"
-                                        :value="old('tahun_terbit')" required />
-                                    <x-input-error :messages="$errors->get('tahun_terbit')" class="mt-2" />
-                                </div>
-
-                                <!-- Stock -->
-                                <div>
-                                    <x-input-label for="stock" :text="__('Stock')" />
-                                    <x-text-input type="number" name="stock" id="stock" class="mt-1"
-                                        :value="old('stock')" required />
-                                    <x-input-error :messages="$errors->get('stock')" class="mt-2" />
-                                </div>
-
-                                <!-- Gambar (Full Width) -->
-                                <div class="lg:col-span-2">
-                                    <x-input-label for="gambar" :text="__('Tambah Sampul Buku')" />
-                                    <x-text-input type="file" name="gambar" id="gambar" class="mt-1"
-                                        required />
-                                    <x-input-error :messages="$errors->get('gambar')" class="mt-2" />
-                                </div>
-
-                                <!-- Deskripsi (Full Width) -->
-                                <div class="lg:col-span-2">
-                                    <x-input-label for="deskripsi" :text="__('Deskripsi')" />
-                                    <textarea name="deskripsi" id="deskripsi" rows="3"
-                                        class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">
-                                        {{ old('deskripsi') }}
-                                    </textarea>
-                                    <x-input-error :messages="$errors->get('deskripsi')" class="mt-2" />
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="px-4 py-4 sm:flex sm:flex-row-reverse">
-                        <x-modal-button type="submit"
-                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
-                            {{ __('Simpan') }}
-                        </x-modal-button>
-
-                        <x-modal-button x-on:click="$store.modal.modalBuku = false" type="button"
-                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
-                            {{ __('Batal') }}
-                        </x-modal-button>
-                    </div>
-                </x-modal>
-            </form>
-
-            <form id="UploadBuku" action="{{ route('import-buku') }}" method="POST" class="space-y-4">
-                @csrf
-                <x-modal modal="$store.modal.modalUpload" dialog="modal-modalUpload-dialog">
-                    <div class="px-5 bg-white sm:p-7 sm:pb-0">
-                        <div class="mt-5 sm:mt-0">
-                            <x-modal-title :label="__('Upload File Buku')" />
-                            <div class="my-2 space-y-3">
-                                <div>
-                                    <span
-                                        class="block px-3 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-400 rounded-lg">
-                                        Pastikan sudah mengunduh file!
-                                        <a href="{{ route('buku-export') }}" class="text-blue-700 underline">Unduh
-                                            Template</a>
-                                    </span>
-
-                                    <input type="file" name="import" id="file" autocomplete="off"
-                                        class="block w-full px-4 py-3 mt-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-indigo-500/30 focus:border-indigo-500 placeholder:text-gray-400"
-                                        required />
-                                    <p id="file-name" class="mt-2 text-sm text-gray-600"></p>
-
-                                    <x-input-error :messages="$errors->get('import')" class="mt-2" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="px-4 py-4 sm:flex sm:flex-row-reverse">
-                        <x-modal-button type="submit"
-                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
-                            {{ __('Upload') }}
-                        </x-modal-button>
-
-                        <x-modal-button x-on:click="$store.modal.modalUpload = false" type="button"
-                            class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
-                            {{ __('Batal') }}
-                        </x-modal-button>
-                    </div>
-                </x-modal>
-            </form>
-
-        </x-slot>
-    </div>
 </x-app-layout>

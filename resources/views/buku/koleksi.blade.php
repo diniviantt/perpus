@@ -1,11 +1,16 @@
 <x-app-layout title="{{ __('Koleksi Buku') }}">
-    <x-header value="{{ __('Koleksi Buku') }}" />
     <x-session-status />
 
-
     <x-card>
-
         <div class="p-4 md:p-6">
+            <!-- Tambahkan Judul dan Deskripsi -->
+            <div class="mb-6 text-center">
+                <h2 class="text-2xl font-bold text-indigo-600">📚 Koleksi Buku Saya</h2>
+                <p class="text-gray-600">Berikut adalah daftar buku yang telah Anda koleksi. Jelajahi dan kelola koleksi
+                    Anda dengan mudah.</p>
+                <div class="w-24 mx-auto mt-2 border-b-2 border-indigo-300"></div>
+            </div>
+
             @if (collect($koleksi)->isEmpty())
                 <p class="text-center text-gray-500">Belum ada buku dalam koleksi.</p>
             @else
@@ -14,8 +19,8 @@
                         <div id="buku-{{ $k->id }}" class="w-full h-max">
                             <div class="flex overflow-hidden bg-white rounded-lg shadow-md h-72">
                                 {{-- Gambar --}}
-                                <div class="w-1/2 h-full">
-                                    <img class="object-cover w-full h-full"
+                                <div class="w-1/2 h-full p-2 bg-white rounded-lg">
+                                    <img class="object-cover w-full h-full rounded-lg"
                                         src="{{ asset('/images/' . ($k->buku->gambar ?? 'noImage.jpg')) }}"
                                         alt="{{ $k->buku->judul }}">
                                 </div>
@@ -40,12 +45,10 @@
                                         <p class="text-sm text-gray-600">Stock:</p>
                                         @if ($k->buku->stock > 0)
                                             <p class="px-2 py-1 text-xs text-white bg-green-500 rounded-full w-max">
-                                                Tersedia
-                                                ({{ $k->buku->stock }})
+                                                Tersedia ({{ $k->buku->stock }})
                                             </p>
                                             <p class="mt-1 text-xs text-gray-500">Buku ini masih tersedia untuk
-                                                dipinjam.
-                                            </p>
+                                                dipinjam.</p>
                                         @else
                                             <p class="px-2 py-1 text-xs text-white bg-red-500 rounded-full w-max">Habis
                                             </p>
@@ -57,31 +60,24 @@
                                     {{-- Tombol Aksi --}}
                                     <div class="flex mt-4 space-x-2">
                                         <a href="{{ route('buku.show', $k->buku->id) }}"
-                                            class="flex items-center justify-center w-8 h-8 text-white transition bg-blue-600 rounded hover:bg-blue-700"
+                                            class="flex items-center justify-center w-8 h-8 text-indigo-600 transition border border-indigo-500 rounded-lg shadow-sm hover:bg-indigo-100"
                                             aria-label="Detail" title="Lihat Detail">
                                             <i data-lucide="eye" class="w-4 h-4"></i>
                                         </a>
 
-
-                                        <!-- Cek apakah buku sudah ada di koleksi -->
-                                        {{-- <button id="btn-tambah-koleksi" data-id="{{ $k->buku->id }}"
-                                            class="flex items-center justify-center w-8 h-8 text-white transition bg-purple-600 rounded hover:bg-purple-700"
-                                            aria-label="Tambah ke Koleksi" title="Tambahkan ke Koleksi">
-                                            <i data-lucide="bookmark" class="w-4 h-4"></i>
-                                        </button> --}}
                                         <a href="{{ route('buku.show', $k->buku->id) }}"
-                                            class="flex items-center justify-center w-8 h-8 text-white transition bg-blue-500 rounded hover:bg-blue-600"
+                                            class="flex items-center justify-center w-8 h-8 text-blue-600 transition border border-blue-500 rounded-lg shadow-sm hover:bg-blue-100"
                                             aria-label="Pinjam Buku" title="Pinjam Buku">
                                             <i data-lucide="book-open" class="w-4 h-4"></i>
                                         </a>
 
-                                        <button
-                                            class="flex items-center justify-center w-8 h-8 text-white transition bg-red-500 rounded hover:bg-red-600"
-                                            onclick="confirmDelete({{ $k->id }})"
+                                        <button onclick="confirmDelete({{ $k->id }})"
+                                            class="flex items-center justify-center w-8 h-8 text-red-600 transition border border-red-500 rounded-lg shadow-sm hover:bg-red-100"
                                             aria-label="Hapus dari Koleksi" title="Hapus dari Koleksi">
                                             <i data-lucide="bookmark-x" class="w-4 h-4"></i>
                                         </button>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -94,31 +90,7 @@
     <x-slot name="scripts">
         <script>
             lucide.createIcons();
-            // Event listener untuk tombol tambah koleksi
-            $(document).on("click", "#btn-tambah-koleksi", function() {
-                let bukuId = $(this).data("id"); // Ambil ID dari atribut data-id
 
-                $.ajax({
-                    url: "{{ route('tambah-koleksi') }}",
-                    type: "POST",
-                    data: {
-                        buku_id: bukuId,
-                        _token: "{{ csrf_token() }}"
-                    },
-                    success: function(response) {
-                        if (response.status === "success") {
-                            Swal.fire("Berhasil!", "Buku telah ditambahkan ke koleksi.", "success");
-                        } else if (response.status === "exists") {
-                            Swal.fire("Info", "Buku sudah ada di koleksi Anda.", "info");
-                        }
-                    },
-                    error: function() {
-                        Swal.fire("Error!", "Terjadi kesalahan.", "error");
-                    }
-                });
-            });
-
-            // Fungsi konfirmasi hapus koleksi
             function confirmDelete(id) {
                 Swal.fire({
                     title: "Apakah Anda yakin?",
@@ -131,9 +103,8 @@
                     cancelButtonText: "Batal"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Jika pengguna mengkonfirmasi, lakukan penghapusan
                         $.ajax({
-                            url: `/dashboard/koleksi-buku/${id}`, // Ganti dengan URL yang sesuai untuk menghapus koleksi
+                            url: `/dashboard/koleksi-buku/${id}`,
                             type: "DELETE",
                             data: {
                                 _token: "{{ csrf_token() }}"
@@ -141,7 +112,7 @@
                             success: function(response) {
                                 Swal.fire("Dihapus!", "Buku telah dihapus dari koleksi.", "success").then(
                                     () => {
-                                        location.reload(); // Reload halaman setelah penghapusan
+                                        location.reload();
                                     });
                             },
                             error: function() {
