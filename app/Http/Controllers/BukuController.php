@@ -9,12 +9,14 @@ use App\Models\Koleksi;
 use App\Models\Profile;
 use App\Models\Kategori;
 use App\Models\KategoriBuku;
+use App\Models\MasterDenda;
 use App\Models\Peminjaman;
 use App\Models\Ulasan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use RealRashid\SweetAlert\Facades\Alert;
 use Yajra\DataTables\Facades\DataTables;
@@ -56,20 +58,31 @@ class BukuController extends Controller
 
         $bukuDipinjamIds = $bukuDipinjam->pluck('buku_id')->toArray();
 
-        // Ambil buku yang paling banyak dipinjam
         $bukuTerpopuler = Peminjaman::select('buku_id', DB::raw('COUNT(buku_id) as total_peminjaman'))
-            ->where('status', 'Dikembalikan') // Hanya menghitung peminjaman yang sudah dikembalikan
+            ->where('status', 'Dikembalikan')
             ->groupBy('buku_id')
             ->orderByDesc('total_peminjaman')
-            ->with(['buku' => function ($query) {
-                if (!auth()->user()->hasRole('admin')) {
-                    $query->where('status', 'Aktif'); // Jika bukan admin, hanya tampilkan buku aktif
+            ->with(['buku' => function ($query) use ($request, $user) {
+                if (!$user->hasRole('admin')) {
+                    $query->where('status', 'Aktif');
                 }
-            }, 'buku.kategori_buku'])
-            ->take(6) // Ambil 6 buku paling banyak dipinjam
+                if ($request->kategori) {
+                    $query->whereHas('kategori_buku', function ($q) use ($request) {
+                        $q->where('kategori_id', $request->kategori);
+                    });
+                }
+                if ($request->search) {
+                    $query->where('judul', 'like', '%' . $request->search . '%');
+                }
+                $query->with('kategori_buku');
+            }])
+            ->take(6)
             ->get()
+            ->filter(function ($item) {
+                return $item->buku !== null; // Pastikan hanya data yang memiliki buku
+            })
             ->map(function ($item) {
-                return $item->buku; // Ambil data buku
+                return $item->buku;
             });
 
         // dd($bukuTerpopuler);
@@ -146,41 +159,56 @@ class BukuController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi input
         $validatedData = $request->validate([
-            'judul' => 'required',
-            'kode_buku' => 'required|unique:buku',
+            'judul' => 'required|string|max:255',
+            'kode_buku' => 'required|string|max:50|unique:buku',
             'kategori_buku' => 'required|array',
-            'pengarang' => 'required',
-            'penerbit' => 'required',
-            'tahun_terbit' => 'required|integer|min:1900|max:' . date('Y'), // Validasi tahun tidak melebihi tahun sekarang
-            'deskripsi' => 'required',
+            'kategori_buku.*' => 'exists:kategori,id',
+            'pengarang' => 'required|string|max:255',
+            'penerbit' => 'required|string|max:255',
+            'tahun_terbit' => 'required|numeric|min:1900|max:' . date('Y'),
+            'stock' => 'required|numeric|min:1',
             'gambar' => 'nullable|mimes:jpg,jpeg,png|max:2048',
-            'stock' => 'required|integer',
+            'deskripsi' => 'nullable|string',
+            'tarif_denda' => 'required|numeric|min:0',
         ]);
 
-        // Ambil data kecuali kategori_buku
-        $data = $request->except('kategori_buku');
+        try {
+            DB::beginTransaction();
 
-        // Cek apakah ada gambar yang diunggah
-        if ($request->hasFile('gambar')) {
-            $nama_gambar = time() . '.' . $request->gambar->extension();
-            $request->gambar->move(public_path('images'), $nama_gambar);
-            $data['gambar'] = $nama_gambar;
+            $data = $request->except('kategori_buku');
+
+            if ($request->hasFile('gambar')) {
+                $nama_gambar = time() . '.' . $request->gambar->extension();
+                $request->gambar->move(public_path('images'), $nama_gambar);
+                $data['gambar'] = $nama_gambar;
+            }
+
+            $buku = Buku::create($data);
+
+            MasterDenda::create([
+                'buku_id' => $buku->id,
+                'tarif_denda' => $request->tarif_denda,
+            ]);
+
+            if ($request->has('kategori_buku') && method_exists($buku, 'kategori_buku')) {
+                $buku->kategori_buku()->sync($request->kategori_buku);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,  // Tambahkan ini agar jQuery bisa membaca respons sukses
+                'message' => 'Buku berhasil ditambahkan.',
+                'data' => $buku
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Simpan data buku
-        $buku = Buku::create($data);
-
-        // Sinkronisasi kategori buku jika tersedia
-        if ($request->has('kategori_buku') && method_exists($buku, 'kategori_buku')) {
-            $buku->kategori_buku()->sync($request->kategori_buku);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Buku berhasil ditambahkan!',
-        ]);
     }
 
 
@@ -206,23 +234,32 @@ class BukuController extends Controller
     public function edit($id)
     {
         $kategori = Kategori::all();
-        $buku = Buku::findOrFail($id);
+        $buku = Buku::with('kategori_buku')->findOrFail($id);
 
-        return view('buku.edit', compact('buku', 'kategori'));
+        // Ambil tarif denda jika ada
+        $tarif_denda = MasterDenda::where('buku_id', $buku->id)->value('tarif_denda');
+
+        // Ambil ID kategori yang dimiliki buku
+        $kategori_terpilih = $buku->kategori_buku->pluck('id')->toArray();
+
+        return view('buku.edit', compact('buku', 'kategori', 'tarif_denda', 'kategori_terpilih'));
     }
+
 
     public function update(Request $request, $id)
     {
         $buku = Buku::findOrFail($id);
 
+        // Validasi input
         $request->validate([
-            'judul' => 'required',
-            'pengarang' => 'required',
-            'penerbit' => 'required',
-            'tahun_terbit' => 'required|integer|min:1900|max:' . date('Y'), // Validasi tahun tidak melebihi tahun sekarang
-            'deskripsi' => 'required',
+            'judul' => 'required|string|max:255',
+            'pengarang' => 'required|string|max:255',
+            'penerbit' => 'required|string|max:255',
+            'tahun_terbit' => 'required|integer|min:1900|max:' . date('Y'),
+            'deskripsi' => 'required|string',
             'gambar' => 'nullable|mimes:jpg,jpeg,png|max:2048',
-            'stock' => 'required|integer',
+            'stock' => 'required|integer|min:1',
+            'tarif_denda' => 'required|numeric|min:0',
         ], [
             'judul.required' => 'Judul tidak boleh kosong',
             'pengarang.required' => 'Pengarang tidak boleh kosong',
@@ -235,32 +272,51 @@ class BukuController extends Controller
             'gambar.mimes' => 'Gambar harus berupa jpg, jpeg, atau png',
             'gambar.max' => 'Ukuran gambar tidak boleh lebih dari 2 MB',
             'stock.required' => 'Stock tidak boleh kosong',
+            'tarif_denda.required' => 'Tarif denda tidak boleh kosong',
+            'tarif_denda.numeric' => 'Tarif denda harus berupa angka',
+            'tarif_denda.min' => 'Tarif denda tidak boleh kurang dari 0',
         ]);
 
-        // Hapus gambar lama jika ada gambar baru diunggah
-        if ($request->hasFile('gambar')) {
-            if ($buku->gambar) {
-                File::delete(public_path('images/' . $buku->gambar));
+        try {
+            DB::beginTransaction();
+
+            // Ambil data kecuali kategori_buku
+            $data = $request->except('kategori_buku');
+
+            // Cek apakah ada gambar baru yang diunggah
+            if ($request->hasFile('gambar')) {
+                if ($buku->gambar) {
+                    File::delete(public_path('images/' . $buku->gambar));
+                }
+
+                $nama_gambar = time() . '.' . $request->gambar->extension();
+                $request->gambar->move(public_path('images'), $nama_gambar);
+                $data['gambar'] = $nama_gambar;
             }
 
-            $nama_gambar = time() . '.' . $request->gambar->extension();
-            $request->gambar->move(public_path('images'), $nama_gambar);
-            $buku->gambar = $nama_gambar;
+            // Update data buku
+            $buku->update($data);
+
+            // Update tarif denda di tabel master_dendas
+            MasterDenda::updateOrCreate(
+                ['buku_id' => $buku->id],
+                ['tarif_denda' => $request->tarif_denda]
+            );
+
+            // Sinkronisasi kategori buku jika tersedia
+            if ($request->has('kategori_buku')) {
+                $buku->kategori_buku()->sync($request->kategori_buku);
+            }
+
+            DB::commit();
+
+            Alert::success('Berhasil', 'Update Berhasil');
+            return redirect()->route('buku.index');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('buku.index')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-
-        // Update data buku
-        $buku->update($request->only(['judul', 'pengarang', 'penerbit', 'tahun_terbit', 'deskripsi', 'stock']));
-
-        // Sinkronisasi kategori buku jika tersedia
-        if ($request->has('kategori_buku')) {
-            $buku->kategori_buku()->sync($request->kategori_buku);
-        }
-
-        Alert::success('Berhasil', 'Update Berhasil');
-        return redirect()->route('buku.index');
     }
-
-
     public function destroy($id)
     {
         $buku = Buku::findOrFail($id);
@@ -420,10 +476,29 @@ class BukuController extends Controller
 
     public function toggleStatus($id)
     {
-        $buku = Buku::findOrFail($id);
-        $buku->status = $buku->status === 'Aktif' ? 'Non Aktif' : 'Aktif';
-        $buku->save();
+        try {
+            // Ambil buku berdasarkan ID
+            $buku = Buku::findOrFail($id);
 
-        return response()->json(['message' => 'Status buku berhasil diperbarui!', 'status' => $buku->status]);
+            Log::info("Mengubah status buku ID: " . $buku->id);
+
+            // Ubah status "Aktif" menjadi "Non Aktif" dan sebaliknya
+            $buku->status = $buku->status === "Aktif" ? "Non Aktif" : "Aktif";
+            $buku->save();
+
+            Log::info("Status buku sekarang: " . $buku->status);
+
+            return response()->json([
+                'message' => $buku->status === "Aktif" ? "Buku berhasil diaktifkan!" : "Buku berhasil dinonaktifkan!",
+                'status' => $buku->status
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error("Error saat update status buku: " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Terjadi kesalahan!',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

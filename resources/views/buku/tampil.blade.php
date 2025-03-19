@@ -8,6 +8,14 @@
         $bukuDipinjamIds = $bukuDipinjam->pluck('buku_id')->toArray();
 
     @endphp
+    @if (session('status'))
+        <div id="flash-message"
+            class="p-3 mb-4 text-white text-center rounded-lg
+        {{ session('alert') == 'success' ? 'bg-green-500' : 'bg-red-500' }}">
+            {{ session('status') }}
+        </div>
+    @endif
+
     @role('admin')
         <div class="flex gap-4 mb-3">
             <!-- Tombol Tambah Buku -->
@@ -227,10 +235,12 @@
                     </div>
                 </div>
             @empty
-                <div class="flex justify-center">
-                    <h1 class="mt-3 text-gray-600 ">Tidak ada buku</h1>
+                <div class="flex flex-col items-center justify-center w-full h-[50vh] text-gray-600 translate-x-96 ">
+                    <i data-lucide="book-x" class="w-16 h-16 text-gray-400"></i>
+                    <h1 class="mt-3 text-lg font-semibold">Tidak ada buku</h1>
                 </div>
             @endforelse
+
         </div>
     </div>
 
@@ -261,9 +271,8 @@
                                     <x-input-error :messages="$errors->get('kode_buku')" class="mt-2" />
                                 </div>
 
-
-                                <!-- Kategori (Full Width, Menggunakan Select2) -->
-                                <div class="lg:col-span-2">
+                                <!-- Kategori -->
+                                <div>
                                     <x-input-label for="kategori" :text="__('Kategori')" />
                                     <select name="kategori_buku[]" id="multiselect" multiple
                                         class="w-full mt-1 rounded-md">
@@ -272,6 +281,14 @@
                                         @endforeach
                                     </select>
                                     <x-input-error :messages="$errors->get('kategori')" class="mt-2" />
+                                </div>
+
+                                <!-- Tahun Terbit -->
+                                <div>
+                                    <x-input-label for="tahun_terbit" :text="__('Tahun Terbit')" />
+                                    <x-text-input name="tahun_terbit" id="tahun_terbit" class="mt-1"
+                                        :value="old('tahun_terbit')" required />
+                                    <x-input-error :messages="$errors->get('tahun_terbit')" class="mt-2" />
                                 </div>
 
                                 <!-- Pengarang -->
@@ -290,14 +307,6 @@
                                     <x-input-error :messages="$errors->get('penerbit')" class="mt-2" />
                                 </div>
 
-                                <!-- Tahun Terbit -->
-                                <div>
-                                    <x-input-label for="tahun_terbit" :text="__('Tahun Terbit')" />
-                                    <x-text-input name="tahun_terbit" id="tahun_terbit" class="mt-1"
-                                        :value="old('tahun_terbit')" required />
-                                    <x-input-error :messages="$errors->get('tahun_terbit')" class="mt-2" />
-                                </div>
-
                                 <!-- Stock -->
                                 <div>
                                     <x-input-label for="stock" :text="__('Stock')" />
@@ -306,7 +315,15 @@
                                     <x-input-error :messages="$errors->get('stock')" class="mt-2" />
                                 </div>
 
-                                <!-- Gambar (Full Width) -->
+                                <!-- Tarif Denda -->
+                                <div>
+                                    <x-input-label for="tarif_denda" :text="__('Tarif Denda per Hari')" />
+                                    <x-text-input type="number" name="tarif_denda" id="tarif_denda" class="mt-1"
+                                        :value="old('tarif_denda')" required />
+                                    <x-input-error :messages="$errors->get('tarif_denda')" class="mt-2" />
+                                </div>
+
+                                <!-- Gambar -->
                                 <div class="lg:col-span-2">
                                     <x-input-label for="gambar" :text="__('Tambah Sampul Buku')" />
                                     <x-text-input type="file" name="gambar" id="gambar" class="mt-1"
@@ -314,17 +331,14 @@
                                     <x-input-error :messages="$errors->get('gambar')" class="mt-2" />
                                 </div>
 
-                                <!-- Deskripsi (Full Width) -->
+                                <!-- Deskripsi -->
                                 <div class="lg:col-span-2">
                                     <x-input-label for="deskripsi" :text="__('Deskripsi')" />
                                     <textarea name="deskripsi" id="deskripsi" rows="3"
-                                        class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">
-                                        {{ old('deskripsi') }}
-                                    </textarea>
+                                        class="block w-full px-4 py-3 mt-1 text-sm text-indigo-700 bg-white border border-gray-400 rounded-lg focus:outline-none focus:ring focus:ring-indigo-600/20 focus:border-indigo-500">{{ old('deskripsi') }}</textarea>
                                     <x-input-error :messages="$errors->get('deskripsi')" class="mt-2" />
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -333,7 +347,6 @@
                             class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
                             {{ __('Simpan') }}
                         </x-modal-button>
-
                         <x-modal-button x-on:click="$store.modal.modalBuku = false" type="button"
                             class="px-4 py-2 text-sm text-white transition-all duration-200 ease-in-out bg-[#213555] rounded-lg hover:bg-gray-500">
                             {{ __('Batal') }}
@@ -341,6 +354,8 @@
                     </div>
                 </x-modal>
             </form>
+
+
 
             <form id="UploadBuku" action="{{ route('import-buku') }}" method="POST" class="space-y-4">
                 @csrf
@@ -854,14 +869,25 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        alert(data.message);
-                        location.reload();
+                        let message = data.status === "Aktif" ? "Buku berhasil diaktifkan!" :
+                            "Buku berhasil dinonaktifkan!";
+
+                        toastr.success(message); // Gunakan toastr.success, bukan toast.success
+                        setTimeout(() => location.reload(), 2000);
                     })
-                    .catch(error => console.error("Error:", error));
+                    .catch(error => {
+                        toastr.error("Terjadi kesalahan saat mengubah status buku");
+                        console.error("Error:", error);
+                    });
             }
+
+            setTimeout(() => {
+                let flashMessage = document.getElementById("flash-message");
+                if (flashMessage) {
+                    flashMessage.style.opacity = "0";
+                    setTimeout(() => flashMessage.remove(), 500);
+                }
+            }, 3000);
         </script>
     </x-slot>
-
-
-
 </x-app-layout>

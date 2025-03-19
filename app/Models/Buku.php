@@ -25,4 +25,8 @@ class Buku extends Model
     {
         return $this->belongsToMany(Kategori::class, 'kategori_buku', 'buku_id', 'kategori_id');
     }
+    public function masterDenda()
+    {
+        return $this->hasOne(MasterDenda::class, 'buku_id', 'id');
+    }
 }

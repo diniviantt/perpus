@@ -23,6 +23,7 @@
 
     {{-- DataTables --}}
     <link href="https://cdn.datatables.net/2.1.2/css/dataTables.tailwindcss.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
     {{-- Styles --}}
     @vite('resources/css/app.css')
@@ -54,6 +55,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 
     @vite('resources/js/app.js')

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Buku;
 use App\Models\Denda;
+use App\Models\MasterDenda;
 use App\Models\ModelHasRole;
 use App\Models\Peminjaman;
 use App\Models\Role;
@@ -396,58 +397,64 @@ class RiwayatPinjamController extends Controller
     public function kembalikanBuku($id)
     {
         // Ambil data peminjaman berdasarkan ID
-        $pinjam = Peminjaman::findOrFail($id);
+        $pinjam = Peminjaman::with('buku')->findOrFail($id);
 
         // Hitung keterlambatan
         $tanggal_jatuh_tempo = $pinjam->tanggal_wajib_kembali;
         $hariTerlambat = Carbon::parse($tanggal_jatuh_tempo)->diffInDays(now(), false);
 
         // Tentukan jumlah keterlambatan, jika lebih dari 0 maka denda dikenakan
-        $keterlambatan = $hariTerlambat > 0 ? $hariTerlambat : 0;
+        $keterlambatan = max(0, $hariTerlambat);
 
-        // Hitung denda (misalnya Rp1000 per hari keterlambatan)
-        $denda = $keterlambatan * 1000;
+        // Ambil tarif denda dari tabel masterdenda berdasarkan buku_id, gunakan default jika kosong
+        $masterDenda = MasterDenda::where('buku_id', $pinjam->buku_id)->first();
+        $tarif_denda = optional($masterDenda)->tarif_denda ?? 1000;
+
+        // Hitung denda berdasarkan tarif dari masterdenda
+        $denda = $keterlambatan * $tarif_denda;
 
         try {
             DB::beginTransaction();
 
             // Update status peminjaman
             $pinjam->update([
-                'status' => 'Dikembalikan',  // Ubah status menjadi 'Dikembalikan'
-                'tanggal_pengembalian' => now(),  // Menambahkan tanggal pengembalian
-                'keterlambatan' => $keterlambatan,  // Menambahkan jumlah keterlambatan
-                'denda' => $denda  // Menyimpan nilai denda pada peminjaman
+                'status' => 'Dikembalikan',
+                'tanggal_pengembalian' => now(),
+                'keterlambatan' => $keterlambatan,
+                'denda' => $denda
             ]);
 
             // Update stok buku yang dikembalikan
-            $buku = $pinjam->buku;  // Ambil data buku terkait peminjaman
-            $buku->increment('stock');  // Tambah stok buku karena buku dikembalikan
+            if ($pinjam->buku) {
+                $pinjam->buku->increment('stock');
+            }
 
-            // Validasi: Buat data denda hanya jika denda tidak null atau lebih dari 0
-            if (!is_null($denda) && $denda > 0) {
+            // Simpan denda hanya jika lebih dari 0
+            if ($denda > 0) {
                 Denda::create([
-                    'peminjaman_id' => $pinjam->id,  // Relasi ke peminjaman
-                    'nominal' => $denda,             // Nominal denda yang dihitung
-                    'tanggal_bayar' => null,         // Denda belum dibayar
-                    'status' => 'Belum Bayar',       // Status denda "Belum Lunas"
-                    'keterangan' => 'Terlambat mengembalikan buku', // Keterangan denda
+                    'peminjaman_id' => $pinjam->id,
+                    'nominal' => $denda,
+                    'tanggal_bayar' => null,
+                    'status' => 'Belum Bayar',
+                    'keterangan' => 'Terlambat',
                 ]);
             }
 
             DB::commit();
 
-            // Response sukses
             return response()->json([
                 'message' => 'Buku telah dikembalikan',
                 'keterlambatan' => $keterlambatan,
-                'denda' => $denda
+                'denda' => $denda,
+                'tarif_denda' => $tarif_denda, // Debugging tambahan
             ]);
         } catch (\Throwable $th) {
             DB::rollback();
-            // Tangani error jika terjadi masalah dalam transaksi
             return response()->json(['error' => $th->getMessage()], 500);
         }
     }
+
+
 
 
     public function batalkanPeminjaman($id)
@@ -490,14 +497,15 @@ class RiwayatPinjamController extends Controller
 
     public function riwayatPembayaranDenda()
     {
-        $denda = Denda::with(['peminjaman.user', 'peminjaman.buku']) // Menyertakan relasi dengan peminjaman, user, dan buku
+        $denda = Denda::with(['peminjaman.user', 'peminjaman.buku.masterDenda']) // Tambahkan masterDenda
             ->select('id', 'peminjaman_id', 'nominal', 'tanggal_bayar', 'status', 'keterangan')
+            ->where('status', 'Belum Bayar')
             ->get();
 
         return DataTables::of($denda)
             ->addIndexColumn()
             ->editColumn('nominal', function ($row) {
-                return number_format($row->nominal, 2);
+                return number_format($row->nominal, 2, ',', '.');
             })
             ->editColumn('tanggal_bayar', function ($row) {
                 return !empty($row->tanggal_bayar)
@@ -508,28 +516,111 @@ class RiwayatPinjamController extends Controller
                 return $row->peminjaman->user->name ?? '-';
             })
             ->addColumn('buku', function ($row) {
-                return $row->peminjaman->buku->judul ?? '-'; // Menampilkan nama buku
+                return $row->peminjaman->buku->judul ?? '-'; // Nama buku
             })
+            ->addColumn('kode', function ($row) {
+                return $row->peminjaman->buku->kode_buku ?? '-'; // Kode buku
+            })
+            ->addColumn('tarif_denda', function ($row) {
+                return optional($row->peminjaman->buku->masterDenda)->tarif_denda
+                    ? number_format(optional($row->peminjaman->buku->masterDenda)->tarif_denda, 0, ',', '.')
+                    : '-';
+            })
+
             ->addColumn('status', function ($row) {
-                $status = $row->status == 'Lunas'
+                $status = $row->status === 'Lunas'
                     ? '<span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-lg">
                           <i class="fas fa-check-circle"></i> Lunas
                        </span>'
                     : '<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-lg">
                           <i class="fas fa-times-circle"></i> Belum Bayar
                        </span>';
+
                 return $status;
             })
+
             ->addColumn('action', function ($row) {
-                if ($row->status != 'Lunas') {
-                    return '<button onclick="konfirmasiBayarDenda(' . $row->id . ')" 
-                                 class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-lg hover:bg-blue-200 transition-all ease-in-out duration-200">
-                                <i class="fas fa-credit-card"></i> Bayar
-                            </button>';
+                // Cek jika status bukan 'Lunas' dan id ada
+                if ($row->status !== 'Lunas' && $row->id) {
+                    // Hanya tampilkan tombol Bayar jika denda belum lunas
+                    return '
+                        <button onclick="konfirmasiBayarDenda(' . e($row->id) . ')" 
+                            class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-lg hover:bg-blue-200 transition-all ease-in-out duration-200">
+                            <i class="fas fa-credit-card"></i> Bayar
+                        </button>';
                 }
+                // Jika status sudah lunas, kembalikan tanda "-"
                 return '-';
             })
-            ->rawColumns(['status', 'action']) // Pastikan kolom status dan action dirender sebagai HTML
+
+            ->addColumn('keterangan', function ($row) {
+                if ($row->keterangan === 'Terlambat') {
+                    return '
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ring-1 ring-red-400 bg-red-100 text-red-700 whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/>
+                        </svg>
+                        Terlambat
+                    </span>';
+                }
+
+                return $row->keterangan ?? '-';
+            })
+
+            ->rawColumns(['status', 'action', 'keterangan', 'tarif_denda']) // Pastikan kolom status dan action dirender sebagai HTML
+            ->make(true);
+    }
+
+    public function riwayatLunasDenda()
+    {
+        $denda = Denda::with(['peminjaman.user', 'peminjaman.buku.masterDenda'])
+            ->select('id', 'peminjaman_id', 'nominal', 'tanggal_bayar', 'status', 'keterangan')
+            ->where('status', 'Lunas') // Hanya ambil data yang statusnya "Lunas"
+            ->get();
+
+        return DataTables::of($denda)
+            ->addIndexColumn()
+            ->editColumn('nominal', function ($row) {
+                return number_format($row->nominal, 2, ',', '.');
+            })
+            ->editColumn('tanggal_bayar', function ($row) {
+                return !empty($row->tanggal_bayar)
+                    ? \Carbon\Carbon::parse($row->tanggal_bayar)->format('d-m-Y | H:i')
+                    : '-';
+            })
+            ->addColumn('user', function ($row) {
+                return $row->peminjaman->user->name ?? '-';
+            })
+            ->addColumn('buku', function ($row) {
+                return $row->peminjaman->buku->judul ?? '-'; // Nama buku
+            })
+            ->addColumn('kode', function ($row) {
+                return $row->peminjaman->buku->kode_buku ?? '-'; // Kode buku
+            })
+            ->addColumn('tarif_denda', function ($row) {
+                return optional($row->peminjaman->buku->masterDenda)->tarif_denda
+                    ? number_format(optional($row->peminjaman->buku->masterDenda)->tarif_denda, 0, ',', '.')
+                    : '-';
+            })
+            ->addColumn('status', function ($row) {
+                return '<span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-lg">
+                            <i class="fas fa-check-circle"></i> Lunas
+                        </span>';
+            })
+            ->addColumn('keterangan', function ($row) {
+                if ($row->keterangan === 'Terlambat') {
+                    return '
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ring-1 ring-red-400 bg-red-100 text-red-700 whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/>
+                        </svg>
+                        Terlambat
+                    </span>';
+                }
+
+                return $row->keterangan ?? '-';
+            })
+            ->rawColumns(['status', 'keterangan', 'tarif_denda']) // Hilangkan "action" karena tidak diperlukan
             ->make(true);
     }
 
@@ -581,5 +672,22 @@ class RiwayatPinjamController extends Controller
             'message' => 'Peminjaman diperpanjang hingga ' . $peminjaman->tanggal_wajib_kembali->format('d-m-Y'),
             'already_extended' => false // Belum diperpanjang
         ]);
+    }
+
+    public function updateDenda(Request $request, $id)
+    {
+        $denda = Denda::findOrFail($id);
+
+        $request->validate([
+            'keterangan' => 'required|string',
+            'nominal' => 'required|numeric|min:0',
+        ]);
+
+        $denda->update([
+            'keterangan' => $request->keterangan,
+            'nominal' => $request->nominal
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Denda berhasil diperbarui']);
     }
 }

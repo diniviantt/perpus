@@ -98,6 +98,7 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
     Route::get('petugas-table', [AnggotaController::class, 'TabelPetugas'])->name('tabel-petugas');
     Route::get('admin-table', [AnggotaController::class, 'TabelAdmin'])->name('tabel-admin');
 
+
     Route::resource('peminjaman', RiwayatPinjamController::class)->names([
         'index' => 'peminjaman.index',
         'create' => 'peminjaman.create',
@@ -132,11 +133,13 @@ Route::prefix('/dashboard')->middleware(['auth'])->group(function () {
 
         Route::get('/halaman-denda', [RiwayatPinjamController::class, 'PembayaranDenda'])->name('halaman-riwayat');
         Route::get('/riwayat-denda', [RiwayatPinjamController::class, 'riwayatPembayaranDenda'])->name('peminjaman-riwayat');
+        Route::get('/riwayat-lunas', [RiwayatPinjamController::class, 'riwayatLunasDenda'])->name('riwayat-lunas');
         Route::post('/peminjaman-bayar-denda/{id}', [RiwayatPinjamController::class, 'bayarDenda'])->name('peminjaman-bayar-denda');
         Route::get('/data-peminjam', [DashboardController::class, 'DataPeminjam'])->name('data-peminjam');
         Route::post('/reviews', [UlasanController::class, 'Ulasan'])->name('ulasan-buku');
         Route::put('/ulasan/{id}/edit', [UlasanController::class, 'update'])->name('ulasan-edit');
         Route::delete('/ulasan-hapus/{id}', [UlasanController::class, 'destroy'])->name('ulasan-hapus');
+        Route::post('/peminjaman-update-denda/{id}', [RiwayatPinjamController::class, 'updateDenda']);
     });
 
 
