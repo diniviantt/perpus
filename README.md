@@ -21,7 +21,7 @@ Sistem Perpustakaan adalah aplikasi berbasis web yang dikembangkan menggunakan L
 
 1. Clone repository ini:
     ```sh
-    git clone https://github.com/username/repo-perpustakaan.git
+    git clone https://github.com/diniviantt/perpus.git
     ```
 2. Masuk ke folder proyek:
     ```sh
