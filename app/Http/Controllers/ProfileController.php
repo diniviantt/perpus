@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
@@ -56,6 +57,48 @@ class ProfileController extends Controller
             return Redirect::route('profile.edit');
         }
     }
+
+    public function updateDataPribadi(Request $request): RedirectResponse
+    {
+        $validatedData = $request->validate([
+            'nik' => ['required', 'digits:16', Rule::unique('users')->ignore(auth()->id())],
+            'alamat' => ['nullable', 'string', 'max:255'],
+            'no_telp' => ['nullable', 'digits_between:10,15'],
+            'ktp' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+        ]);
+
+        DB::transaction(function () use ($request, &$validatedData) {
+            $user = $request->user();
+
+            // Hapus & Simpan Foto KTP Baru dengan Nama Asli
+            if ($request->file('ktp')) {
+                if ($user->ktp && Storage::exists("photoKtp/{$user->ktp}")) {
+                    Storage::delete("photoKtp/{$user->ktp}");
+                }
+
+                $file = $request->file('ktp');
+                $fileName = $file->getClientOriginalName(); // Ambil nama asli
+                $file->storeAs('photoKtp', $fileName); // Simpan dengan nama asli
+
+                $validatedData['ktp'] = $fileName; // Simpan hanya nama file di database
+            }
+
+            // Update hanya data pribadi tanpa mengganggu data lain
+            $user->update([
+                'nik' => $validatedData['nik'],
+                'ktp' => $validatedData['ktp'] ?? $user->ktp,
+                'data' => array_merge($user->data ?? [], [
+                    'alamat' => $validatedData['alamat'] ?? $user->data['alamat'] ?? null,
+                    'no_telp' => $validatedData['no_telp'] ?? $user->data['no_telp'] ?? null,
+                ]),
+            ]);
+        });
+
+        flash('Data pribadi telah diperbarui!');
+
+        return Redirect::route('profile.edit');
+    }
+
 
     /**
      * Update the user's password.

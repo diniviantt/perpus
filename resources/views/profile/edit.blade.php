@@ -14,6 +14,9 @@
         </div>
     </div>
 
+    <div class="mb-7">
+        @include('profile.partials.data-user')
+    </div>
     <div>
         @include('profile.partials.delete-user-form')
     </div>
@@ -24,7 +27,7 @@
                 const image = document.querySelector('#image');
                 const imagePreview = document.querySelector('.image-preview');
                 const oFReader = new FileReader();
-                
+
                 oFReader.readAsDataURL(image.files[0]);
                 oFReader.onload = function(oFREvent) {
                     imagePreview.src = oFREvent.target.result;

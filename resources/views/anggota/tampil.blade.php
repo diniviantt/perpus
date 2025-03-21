@@ -64,6 +64,16 @@
                             title: 'Email'
                         },
                         {
+                            data: 'alamat',
+                            name: 'alamat',
+                            title: 'Alamat'
+                        },
+                        {
+                            data: 'telepon',
+                            name: 'telepon',
+                            title: 'No Telepon'
+                        },
+                        {
                             data: 'option',
                             name: 'option',
                             title: 'Aksi',

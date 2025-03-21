@@ -18,6 +18,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->text('avatar')->nullable();
+            $table->string('nik')->unique()->nullable(); // Tambahkan nullable
+            $table->string('ktp')->nullable(); // Tambahkan nullable
             $table->json('data')->nullable();
             $table->rememberToken();
             $table->timestamps();

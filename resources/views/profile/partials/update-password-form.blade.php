@@ -12,7 +12,7 @@
     <form action="{{ route('profile.password') }}" method="POST" class="space-y-4">
         @csrf
         @method('PATCH')
-        
+
         {{-- Current Password --}}
         <div>
             <x-input-label for="update_password_current_password" :text="__('Current Password')" />
@@ -30,7 +30,8 @@
         {{-- Confirm Password --}}
         <div>
             <x-input-label for="update_password_password_confirmation" :text="__('Confirm Password')" />
-            <x-text-input type="password" name="password_confirmation" id="update_password_password_confirmation" class="mt-1" />
+            <x-text-input type="password" name="password_confirmation" id="update_password_password_confirmation"
+                class="mt-1" />
             <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
         </div>
 

@@ -119,6 +119,13 @@ class AnggotaController extends Controller
             ->addColumn('email', function ($peminjam) {
                 return $peminjam->email ?? '-';
             })
+            ->addColumn('alamat', function ($peminjam) {
+                return ($peminjam->data['alamat']) ?? '-';
+            })
+            ->addColumn('telepon', function ($peminjam) {
+                return ($peminjam->data['no_telp']) ?? '-';
+            })
+
             ->addColumn('option', 'anggota.dropdown-anggota')
             ->rawColumns(['name', 'email', 'option']) // Memastikan HTML bisa dirender dengan benar
             ->make(true);
